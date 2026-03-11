@@ -23,3 +23,8 @@ LibTracker utilizes a Layered Architecture, chosen because it is understandable,
 • Application Layer (Backend): A REST API built with Python, handling Authentication and Validation, Occupancy Service, and Statistics Service.
 • Data Layer (Database): A MySQL Database system.
 • Version Control: GitHub.
+
+Quality Attributes (Reis’ contribution)
+•	Simplicity: There are various types of users for this app, so everyone should understand and use it easily to save time as intended.
+•	Accuracy: The program is completely based on accuracy, so every information that the program provides has to be accurate to improve user satisfaction.
+•	Scalability: The system should not crash in case of a large amount of users at certain time spans, such as final weeks.
