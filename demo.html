@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LibTracker – Live Demo</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --primary: #1a1f5e;
+    --accent: #4f6ef7;
+    --green: #22c55e;
+    --yellow: #f59e0b;
+    --red: #ef4444;
+    --bg: #f0f2ff;
+    --card: #ffffff;
+    --text: #1e293b;
+    --muted: #64748b;
+  }
+  body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); }
+
+  /* ─── NAV ─────────────────────────────────────────── */
+  nav {
+    background: var(--primary);
+    padding: 0 2rem;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 60px; position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 2px 12px rgba(0,0,0,.3);
+  }
+  .nav-logo { color: #fff; font-size: 1.4rem; font-weight: 700; letter-spacing: .5px; }
+  .nav-logo span { color: #7c9eff; }
+  .nav-tabs { display: flex; gap: 4px; }
+  .nav-tab {
+    color: #aab4d4; background: transparent; border: none;
+    padding: 8px 18px; border-radius: 6px; cursor: pointer;
+    font-size: .9rem; font-weight: 500; transition: all .2s;
+  }
+  .nav-tab:hover { background: rgba(255,255,255,.08); color: #fff; }
+  .nav-tab.active { background: var(--accent); color: #fff; }
+  .nav-badge {
+    background: #ef4444; color: #fff; font-size: .7rem;
+    padding: 2px 7px; border-radius: 10px; margin-left: 6px;
+  }
+
+  /* ─── LAYOUT ──────────────────────────────────────── */
+  .page { display: none; padding: 2rem; max-width: 1200px; margin: 0 auto; }
+  .page.active { display: block; }
+
+  /* ─── HERO ────────────────────────────────────────── */
+  .hero {
+    background: linear-gradient(135deg, var(--primary) 0%, #2d3ab5 100%);
+    color: #fff; border-radius: 16px; padding: 2.5rem 2rem;
+    margin-bottom: 1.5rem; text-align: center;
+  }
+  .hero h1 { font-size: 2.2rem; margin-bottom: .5rem; }
+  .hero p { color: #aab4d4; font-size: 1rem; }
+  .live-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(34,197,94,.15); border: 1px solid #22c55e;
+    color: #22c55e; padding: 4px 12px; border-radius: 20px;
+    font-size: .8rem; font-weight: 600; margin-bottom: 1rem;
+  }
+  .live-dot { width: 8px; height: 8px; background: #22c55e; border-radius: 50%; animation: pulse 1.5s infinite; }
+  @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.3; } }
+
+  /* ─── CARDS GRID ──────────────────────────────────── */
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1.2rem; }
+  .card {
+    background: var(--card); border-radius: 14px;
+    padding: 1.4rem; box-shadow: 0 2px 12px rgba(0,0,0,.07);
+    border: 1px solid #e2e8f0; transition: transform .2s, box-shadow .2s;
+  }
+  .card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,0,0,.12); }
+  .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; }
+  .card-title { font-weight: 600; font-size: 1rem; color: var(--text); }
+  .card-sub { font-size: .8rem; color: var(--muted); margin-top: 2px; }
+  .status-badge {
+    font-size: .75rem; font-weight: 700; padding: 3px 10px;
+    border-radius: 20px; text-transform: uppercase; letter-spacing: .5px;
+  }
+  .status-green  { background: #dcfce7; color: #15803d; }
+  .status-yellow { background: #fef9c3; color: #a16207; }
+  .status-red    { background: #fee2e2; color: #b91c1c; }
+
+  /* ─── PROGRESS BAR ────────────────────────────────── */
+  .progress-wrap { margin-bottom: .8rem; }
+  .progress-label { display: flex; justify-content: space-between; font-size: .82rem; color: var(--muted); margin-bottom: 4px; }
+  .progress-bar { height: 10px; background: #e2e8f0; border-radius: 10px; overflow: hidden; }
+  .progress-fill {
+    height: 100%; border-radius: 10px;
+    transition: width 1s ease, background .5s;
+  }
+  .fill-green  { background: var(--green); }
+  .fill-yellow { background: var(--yellow); }
+  .fill-red    { background: var(--red); }
+  .card-info { font-size: .82rem; color: var(--muted); display: flex; justify-content: space-between; }
+
+  /* ─── STAT STRIP ──────────────────────────────────── */
+  .stat-strip { display: grid; grid-template-columns: repeat(4,1fr); gap: 1rem; margin-bottom: 1.5rem; }
+  .stat-card {
+    background: var(--card); border-radius: 12px; padding: 1.2rem;
+    text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,.06);
+    border: 1px solid #e2e8f0;
+  }
+  .stat-val { font-size: 2rem; font-weight: 700; color: var(--primary); }
+  .stat-lbl { font-size: .8rem; color: var(--muted); margin-top: 2px; }
+
+  /* ─── SECTION TITLE ───────────────────────────────── */
+  .section-title { font-size: 1.1rem; font-weight: 700; color: var(--primary); margin: 1.5rem 0 .8rem; }
+
+  /* ─── RESERVATION ─────────────────────────────────── */
+  .res-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; }
+  .form-card { background: var(--card); border-radius: 14px; padding: 1.6rem; box-shadow: 0 2px 12px rgba(0,0,0,.07); border: 1px solid #e2e8f0; }
+  .form-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 1.2rem; color: var(--primary); }
+  label { display: block; font-size: .85rem; color: var(--muted); margin-bottom: 4px; margin-top: 12px; font-weight: 500; }
+  select, input[type=text], input[type=date], input[type=time], textarea {
+    width: 100%; padding: 9px 12px; border: 1px solid #cbd5e1;
+    border-radius: 8px; font-size: .9rem; color: var(--text);
+    background: #f8fafc; transition: border .2s;
+  }
+  select:focus, input:focus, textarea:focus { outline: none; border-color: var(--accent); background: #fff; }
+  .btn {
+    display: inline-block; padding: 10px 22px; border-radius: 8px;
+    font-size: .9rem; font-weight: 600; cursor: pointer; border: none;
+    transition: all .2s; margin-top: 14px;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #3a56e8; transform: translateY(-1px); }
+  .btn-success { background: var(--green); color: #fff; }
+  .btn-success:hover { background: #16a34a; transform: translateY(-1px); }
+
+  /* ─── RESERVATION LIST ────────────────────────────── */
+  .res-list { list-style: none; }
+  .res-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 0; border-bottom: 1px solid #f1f5f9;
+  }
+  .res-item:last-child { border-bottom: none; }
+  .res-name { font-weight: 600; font-size: .9rem; }
+  .res-meta { font-size: .8rem; color: var(--muted); }
+  .res-time { font-size: .8rem; font-weight: 600; color: var(--accent); }
+
+  /* ─── FEEDBACK ────────────────────────────────────── */
+  .feed-list { list-style: none; margin-top: .5rem; }
+  .feed-item {
+    background: var(--card); border-radius: 10px; padding: 1rem;
+    margin-bottom: .8rem; border: 1px solid #e2e8f0;
+    display: flex; gap: 1rem; align-items: flex-start;
+  }
+  .feed-avatar {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: var(--accent); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: .9rem; flex-shrink: 0;
+  }
+  .feed-body { flex: 1; }
+  .feed-user { font-weight: 700; font-size: .88rem; }
+  .feed-library { font-size: .78rem; color: var(--muted); }
+  .feed-text { font-size: .87rem; margin-top: 4px; color: var(--text); }
+  .feed-time { font-size: .75rem; color: var(--muted); margin-top: 4px; }
+  .feed-tag { font-size: .75rem; padding: 2px 8px; border-radius: 10px; margin-left: 6px; }
+  .tag-quiet { background: #dbeafe; color: #1d4ed8; }
+  .tag-loud  { background: #fee2e2; color: #b91c1c; }
+  .tag-full  { background: #fef9c3; color: #854d0e; }
+
+  /* ─── ADMIN CHARTS ────────────────────────────────── */
+  .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; }
+  .chart-card {
+    background: var(--card); border-radius: 14px; padding: 1.4rem;
+    box-shadow: 0 2px 12px rgba(0,0,0,.07); border: 1px solid #e2e8f0;
+  }
+  .chart-card h3 { font-size: .95rem; font-weight: 700; color: var(--primary); margin-bottom: 1rem; }
+  .chart-wrap { position: relative; height: 200px; }
+
+  /* ─── TOAST ───────────────────────────────────────── */
+  .toast {
+    position: fixed; bottom: 2rem; right: 2rem;
+    background: #1e293b; color: #fff; padding: 12px 20px;
+    border-radius: 10px; font-size: .88rem; font-weight: 500;
+    box-shadow: 0 4px 20px rgba(0,0,0,.3); z-index: 9999;
+    transform: translateY(100px); opacity: 0;
+    transition: all .3s ease;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast.success { border-left: 4px solid var(--green); }
+
+  /* ─── SEAT MAP ────────────────────────────────────── */
+  .seat-map { display: grid; grid-template-columns: repeat(8,1fr); gap: 6px; padding: 1rem; background: #f8fafc; border-radius: 10px; margin-top: .8rem; }
+  .seat {
+    aspect-ratio: 1; border-radius: 5px; cursor: pointer;
+    transition: all .2s; font-size: .65rem; display: flex;
+    align-items: center; justify-content: center; font-weight: 700;
+  }
+  .seat.taken   { background: #fecaca; color: #b91c1c; }
+  .seat.free    { background: #bbf7d0; color: #15803d; cursor: pointer; }
+  .seat.selected { background: var(--accent); color: #fff; }
+  .seat-legend { display: flex; gap: 1rem; font-size: .78rem; color: var(--muted); margin-top: 6px; }
+  .legend-dot { width:12px; height:12px; border-radius:3px; display:inline-block; margin-right:4px; }
+
+  @media (max-width: 768px) {
+    .stat-strip { grid-template-columns: repeat(2,1fr); }
+    .res-grid, .chart-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">Lib<span>Tracker</span></div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showPage('dashboard')">Dashboard</button>
+    <button class="nav-tab" onclick="showPage('reserve')">Reserve a Seat</button>
+    <button class="nav-tab" onclick="showPage('feedback')">Feedback <span class="nav-badge" id="feedCount">3</span></button>
+    <button class="nav-tab" onclick="showPage('admin')">Admin View</button>
+  </div>
+</nav>
+
+<!-- ─────────────────── PAGE 1: DASHBOARD ─────────────────── -->
+<div class="page active" id="page-dashboard">
+  <div class="hero">
+    <div class="live-badge"><span class="live-dot"></span> LIVE – Updated every 30 sec</div>
+    <h1>University Library Occupancy</h1>
+    <p>Check real-time busyness before heading to campus</p>
+  </div>
+
+  <div class="stat-strip">
+    <div class="stat-card">
+      <div class="stat-val" id="stat-total">7</div>
+      <div class="stat-lbl">Locations Tracked</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" id="stat-avail">4</div>
+      <div class="stat-lbl">Available Now</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" id="stat-pct">58%</div>
+      <div class="stat-lbl">Avg Occupancy</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" id="stat-seats">142</div>
+      <div class="stat-lbl">Free Seats</div>
+    </div>
+  </div>
+
+  <div class="section-title">All Study Locations</div>
+  <div class="grid" id="libraryGrid"></div>
+</div>
+
+<!-- ─────────────────── PAGE 2: RESERVATION ──────────────── -->
+<div class="page" id="page-reserve">
+  <div class="section-title" style="margin-top:0">Reserve a Study Seat</div>
+  <div class="res-grid">
+    <div class="form-card">
+      <h3>New Reservation</h3>
+
+      <label>Select Library / Study Area</label>
+      <select id="res-library">
+        <option>Main Library – Floor 1 (Quiet)</option>
+        <option>Main Library – Floor 2 (Group)</option>
+        <option>Engineering Library</option>
+        <option>Study Hall A</option>
+        <option>Study Hall B</option>
+        <option>Law Library</option>
+        <option>Science Reading Room</option>
+      </select>
+
+      <label>Date</label>
+      <input type="date" id="res-date">
+
+      <label>Time Slot</label>
+      <select id="res-time">
+        <option>09:00 – 11:00</option>
+        <option>11:00 – 13:00</option>
+        <option>13:00 – 15:00</option>
+        <option>15:00 – 17:00</option>
+        <option>17:00 – 19:00</option>
+        <option>19:00 – 21:00</option>
+      </select>
+
+      <label>Pick a Seat</label>
+      <div class="seat-map" id="seatMap"></div>
+      <div class="seat-legend">
+        <span><span class="legend-dot" style="background:#bbf7d0"></span>Available</span>
+        <span><span class="legend-dot" style="background:#fecaca"></span>Taken</span>
+        <span><span class="legend-dot" style="background:#4f6ef7"></span>Your selection</span>
+      </div>
+
+      <button class="btn btn-primary" onclick="makeReservation()" style="width:100%">Confirm Reservation</button>
+    </div>
+
+    <div class="form-card">
+      <h3>Your Active Reservations</h3>
+      <ul class="res-list" id="resList">
+        <li class="res-item">
+          <div>
+            <div class="res-name">Main Library – Floor 1</div>
+            <div class="res-meta">Today · Seat 14</div>
+          </div>
+          <div class="res-time">13:00–15:00</div>
+        </li>
+        <li class="res-item">
+          <div>
+            <div class="res-name">Engineering Library</div>
+            <div class="res-meta">Tomorrow · Seat 7</div>
+          </div>
+          <div class="res-time">11:00–13:00</div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ─────────────────── PAGE 3: FEEDBACK ─────────────────── -->
+<div class="page" id="page-feedback">
+  <div class="res-grid">
+    <div class="form-card">
+      <h3>Submit Occupancy Feedback</h3>
+      <p style="font-size:.85rem;color:var(--muted);margin-bottom:.5rem">Help other students by reporting current conditions.</p>
+
+      <label>Library</label>
+      <select id="fb-library">
+        <option>Main Library – Floor 1 (Quiet)</option>
+        <option>Main Library – Floor 2 (Group)</option>
+        <option>Engineering Library</option>
+        <option>Study Hall A</option>
+        <option>Law Library</option>
+      </select>
+
+      <label>Current busyness</label>
+      <select id="fb-busy">
+        <option>Quiet – lots of seats available</option>
+        <option>Moderate – some seats taken</option>
+        <option>Busy – hard to find a seat</option>
+        <option>Full – completely occupied</option>
+      </select>
+
+      <label>Noise level</label>
+      <select id="fb-noise">
+        <option>Silent</option>
+        <option>Low murmur</option>
+        <option>Moderate</option>
+        <option>Loud</option>
+      </select>
+
+      <label>Comment (optional)</label>
+      <textarea id="fb-comment" rows="3" placeholder="Anything else students should know?"></textarea>
+
+      <button class="btn btn-success" onclick="submitFeedback()" style="width:100%">Submit Feedback</button>
+    </div>
+
+    <div>
+      <div class="section-title" style="margin-top:0">Recent Feedback</div>
+      <ul class="feed-list" id="feedList"></ul>
+    </div>
+  </div>
+</div>
+
+<!-- ─────────────────── PAGE 4: ADMIN ─────────────────── -->
+<div class="page" id="page-admin">
+  <div class="section-title" style="margin-top:0">Admin Statistics Dashboard</div>
+
+  <div class="stat-strip" style="margin-bottom:1.5rem">
+    <div class="stat-card">
+      <div class="stat-val">1,284</div>
+      <div class="stat-lbl">Visits Today</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val">87</div>
+      <div class="stat-lbl">Active Reservations</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val">14:00</div>
+      <div class="stat-lbl">Today's Peak Hour</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val">94%</div>
+      <div class="stat-lbl">Feedback Accuracy</div>
+    </div>
+  </div>
+
+  <div class="chart-grid">
+    <div class="chart-card">
+      <h3>Hourly Occupancy – Main Library</h3>
+      <div class="chart-wrap"><canvas id="chartHourly"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>Weekly Avg Occupancy by Location</h3>
+      <div class="chart-wrap"><canvas id="chartWeekly"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>Daily Reservations This Week</h3>
+      <div class="chart-wrap"><canvas id="chartRes"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>Occupancy Distribution (Today)</h3>
+      <div class="chart-wrap"><canvas id="chartDist"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── DATA ─────────────────────────────────────────────────
+const libraries = [
+  { name: "Main Library – Floor 1", type: "Quiet Zone", capacity: 80, occupied: 24 },
+  { name: "Main Library – Floor 2", type: "Group Study", capacity: 60, occupied: 54 },
+  { name: "Engineering Library",    type: "Open Access", capacity: 50, occupied: 41 },
+  { name: "Study Hall A",            type: "Quiet Zone", capacity: 40, occupied: 8  },
+  { name: "Study Hall B",            type: "Open Access", capacity: 40, occupied: 38 },
+  { name: "Law Library",             type: "Quiet Zone", capacity: 35, occupied: 12 },
+  { name: "Science Reading Room",    type: "Group Study", capacity: 45, occupied: 35 },
+];
+
+const feedbacks = [
+  { user: "Damla K.", lib: "Main Library – Floor 1", busy: "Quiet", noise: "Silent",   comment: "Very few people, great for studying!", time: "10 min ago", tag: "quiet" },
+  { user: "Barış T.", lib: "Engineering Library",    busy: "Busy",  noise: "Moderate", comment: "Almost full, grab a seat early.",       time: "22 min ago", tag: "full"  },
+  { user: "Can Y.",   lib: "Study Hall B",            busy: "Full",  noise: "Loud",     comment: "No seats left, try Study Hall A.",      time: "35 min ago", tag: "loud"  },
+];
+
+// ─── LIBRARY GRID ─────────────────────────────────────────
+function getPct(lib) { return Math.round(lib.occupied / lib.capacity * 100); }
+function getStatus(pct) {
+  if (pct < 50) return ['green',  'Available'];
+  if (pct < 80) return ['yellow', 'Moderate'];
+  return              ['red',    'Busy'];
+}
+function renderLibraries() {
+  const grid = document.getElementById('libraryGrid');
+  grid.innerHTML = '';
+  libraries.forEach((lib, i) => {
+    const pct = getPct(lib);
+    const [color, label] = getStatus(pct);
+    const free = lib.capacity - lib.occupied;
+    grid.innerHTML += `
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">${lib.name}</div>
+            <div class="card-sub">${lib.type}</div>
+          </div>
+          <span class="status-badge status-${color}">${label}</span>
+        </div>
+        <div class="progress-wrap">
+          <div class="progress-label"><span>Occupancy</span><span>${pct}%</span></div>
+          <div class="progress-bar"><div class="progress-fill fill-${color}" style="width:${pct}%"></div></div>
+        </div>
+        <div class="card-info">
+          <span>${lib.occupied} / ${lib.capacity} seats taken</span>
+          <span><strong>${free}</strong> seats free</span>
+        </div>
+      </div>`;
+  });
+}
+
+// ─── LIVE UPDATE SIMULATION ───────────────────────────────
+function liveUpdate() {
+  libraries.forEach(lib => {
+    const delta = Math.floor(Math.random() * 5) - 2;
+    lib.occupied = Math.max(0, Math.min(lib.capacity, lib.occupied + delta));
+  });
+  renderLibraries();
+  const totalFree = libraries.reduce((s,l) => s + l.capacity - l.occupied, 0);
+  const avgPct = Math.round(libraries.reduce((s,l) => s + getPct(l), 0) / libraries.length);
+  const avail = libraries.filter(l => getPct(l) < 80).length;
+  document.getElementById('stat-avail').textContent = avail;
+  document.getElementById('stat-pct').textContent = avgPct + '%';
+  document.getElementById('stat-seats').textContent = totalFree;
+}
+setInterval(liveUpdate, 8000);
+
+// ─── FEEDBACK LIST ────────────────────────────────────────
+function renderFeedback() {
+  const list = document.getElementById('feedList');
+  list.innerHTML = feedbacks.map(f => `
+    <li class="feed-item">
+      <div class="feed-avatar">${f.user[0]}</div>
+      <div class="feed-body">
+        <div><span class="feed-user">${f.user}</span>
+          <span class="feed-tag tag-${f.tag}">${f.busy}</span>
+        </div>
+        <div class="feed-library">${f.lib} · Noise: ${f.noise}</div>
+        <div class="feed-text">"${f.comment}"</div>
+        <div class="feed-time">${f.time}</div>
+      </div>
+    </li>`).join('');
+}
+
+// ─── SEAT MAP ─────────────────────────────────────────────
+let selectedSeat = null;
+const takenSeats = [1,3,7,8,12,15,18,20,22,25,28,30,31,33];
+function renderSeatMap() {
+  const map = document.getElementById('seatMap');
+  map.innerHTML = '';
+  for (let i = 1; i <= 40; i++) {
+    const taken = takenSeats.includes(i);
+    const sel = selectedSeat === i;
+    const cls = sel ? 'selected' : (taken ? 'taken' : 'free');
+    const label = taken ? '✕' : (sel ? '★' : i);
+    map.innerHTML += `<div class="seat ${cls}" onclick="selectSeat(${i},${taken})">${label}</div>`;
+  }
+}
+function selectSeat(n, taken) {
+  if (taken) return;
+  selectedSeat = n;
+  renderSeatMap();
+}
+
+// ─── RESERVATION ─────────────────────────────────────────
+function makeReservation() {
+  if (!selectedSeat) { showToast('Please select a seat first', '⚠️'); return; }
+  const lib = document.getElementById('res-library').value;
+  const time = document.getElementById('res-time').value;
+  const date = document.getElementById('res-date').value || 'Today';
+  const list = document.getElementById('resList');
+  list.innerHTML = `<li class="res-item">
+    <div><div class="res-name">${lib}</div>
+    <div class="res-meta">${date} · Seat ${selectedSeat}</div></div>
+    <div class="res-time">${time}</div>
+  </li>` + list.innerHTML;
+  takenSeats.push(selectedSeat);
+  selectedSeat = null;
+  renderSeatMap();
+  showToast('Reservation confirmed!', '✅');
+}
+
+// ─── SUBMIT FEEDBACK ─────────────────────────────────────
+function submitFeedback() {
+  const lib  = document.getElementById('fb-library').value;
+  const busy = document.getElementById('fb-busy').value.split('–')[0].trim();
+  const noise= document.getElementById('fb-noise').value;
+  const cmt  = document.getElementById('fb-comment').value || 'No additional comment.';
+  const tag  = busy.toLowerCase().includes('quiet') ? 'quiet' : busy.toLowerCase().includes('full') ? 'full' : 'loud';
+  feedbacks.unshift({ user: 'You', lib, busy, noise, comment: cmt, time: 'Just now', tag });
+  renderFeedback();
+  document.getElementById('fb-comment').value = '';
+  const count = parseInt(document.getElementById('feedCount').textContent) + 1;
+  document.getElementById('feedCount').textContent = count;
+  showToast('Feedback submitted – thank you!', '✅');
+}
+
+// ─── CHARTS ──────────────────────────────────────────────
+function initCharts() {
+  const accent = '#4f6ef7', green = '#22c55e', yellow = '#f59e0b', red = '#ef4444';
+  // Hourly
+  new Chart(document.getElementById('chartHourly'), {
+    type: 'line',
+    data: {
+      labels: ['08','09','10','11','12','13','14','15','16','17','18','19','20'],
+      datasets: [{
+        label: 'Occupancy %', data: [10,22,45,60,75,68,82,79,70,65,55,40,20],
+        borderColor: accent, backgroundColor: 'rgba(79,110,247,.1)',
+        fill: true, tension: .4, pointRadius: 4
+      }]
+    },
+    options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{y:{max:100,ticks:{callback:v=>v+'%'}}} }
+  });
+  // Weekly bar
+  new Chart(document.getElementById('chartWeekly'), {
+    type: 'bar',
+    data: {
+      labels: ['Main L.1','Main L.2','Eng. Lib','Hall A','Hall B','Law Lib','Science'],
+      datasets: [{ label: 'Avg %', data: [30,90,82,20,95,34,78],
+        backgroundColor: [green,red,yellow,green,red,green,yellow] }]
+    },
+    options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{y:{max:100}} }
+  });
+  // Daily reservations
+  new Chart(document.getElementById('chartRes'), {
+    type: 'bar',
+    data: {
+      labels: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+      datasets: [{ label: 'Reservations', data: [45,67,89,72,94,38,21],
+        backgroundColor: accent, borderRadius: 6 }]
+    },
+    options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}} }
+  });
+  // Donut
+  new Chart(document.getElementById('chartDist'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Available (<50%)','Moderate (50-80%)','Busy (>80%)'],
+      datasets: [{ data: [2,2,3], backgroundColor: [green, yellow, red], hoverOffset: 8 }]
+    },
+    options: { responsive:true, maintainAspectRatio:false }
+  });
+}
+
+// ─── NAV / TOAST ─────────────────────────────────────────
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  event.target.classList.add('active');
+}
+let toastTimer;
+function showToast(msg, icon='') {
+  const t = document.getElementById('toast');
+  t.textContent = (icon ? icon + '  ' : '') + msg;
+  t.className = 'toast success show';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ─── INIT ─────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  // set today's date as default
+  document.getElementById('res-date').valueAsDate = new Date();
+  renderLibraries();
+  renderFeedback();
+  renderSeatMap();
+  initCharts();
+});
+</script>
+</body>
+</html>
