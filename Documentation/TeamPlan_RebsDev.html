@@ -300,10 +300,10 @@
   <div class="section-title">👥 Kişi Bazlı Görev Dağılımı</div>
   <div class="person-grid">
 
-    <div class="person-card emre">
-      <div class="avatar av-e">ET</div>
-      <div class="person-name">Emre Turan</div>
-      <div class="person-role">🏗️ Backend Lead / Repo Sahibi</div>
+    <div class="person-card sirac">
+      <div class="avatar av-s">SK</div>
+      <div class="person-name">Sirac Ketenoglu</div>
+      <div class="person-role">🏗️ Backend Lead</div>
       <ul class="task-list">
         <li>Flask/FastAPI proje iskeletini kur</li>
         <li>Veritabanı modelleri (SQLAlchemy)</li>
@@ -315,48 +315,48 @@
       </ul>
     </div>
 
-    <div class="person-card sirac">
-      <div class="avatar av-s">SK</div>
-      <div class="person-name">Sirac Ketenoglu</div>
-      <div class="person-role">🎨 Frontend / Demo Lead</div>
+    <div class="person-card emre">
+      <div class="avatar av-e">ET</div>
+      <div class="person-name">Emre Turan</div>
+      <div class="person-role">📡 Auth & Feedback Sistemi</div>
       <ul class="task-list">
-        <li>Demo.html'i gerçek API'ye bağla</li>
-        <li>Reservation sistemi UI → backend entegrasyon</li>
-        <li>Feedback formu API bağlantısı</li>
-        <li>Admin dashboard gerçek veriyle çalıştır</li>
-        <li>Mobil uyumluluk & responsive test</li>
-        <li>README.md güncelle (kurulum adımları)</li>
-        <li>Final sunum demo güncellemesi</li>
+        <li>JWT Authentication sistemi kur</li>
+        <li>Feedback API endpoint'lerini yaz</li>
+        <li>Fake feedback önleme mekanizması</li>
+        <li>Öğrenci doğrulama (üniversite e-postası)</li>
+        <li>İstatistik & raporlama API'si</li>
+        <li>Security review yap</li>
+        <li>Final rapor "Sistem Güvenliği" bölümü</li>
       </ul>
     </div>
 
     <div class="person-card reis">
       <div class="avatar av-r">RY</div>
       <div class="person-name">Reis Yıldız</div>
-      <div class="person-role">🧪 Test & Rezervasyon Sistemi</div>
+      <div class="person-role">🎨 Frontend Lead</div>
       <ul class="task-list">
-        <li>Reservation API endpoint'leri yaz</li>
-        <li>Test planı oluştur (test case listesi)</li>
-        <li>Unit testler yaz (pytest)</li>
-        <li>Oturum & auth akışını test et</li>
-        <li>Çakışan rezervasyon senaryoları test</li>
-        <li>Bug raporu ve fix süreci yönet</li>
-        <li>Validation raporu (W12) hazırla</li>
+        <li>Demo.html'i gerçek API'ye bağla</li>
+        <li>Dashboard → GET /libraries entegrasyonu</li>
+        <li>Reservation formu → POST /reservations</li>
+        <li>Feedback formu → POST /feedback</li>
+        <li>Admin panosu gerçek grafiklerle çalıştır</li>
+        <li>Mobil uyumluluk & responsive test</li>
+        <li>README.md güncelle (kurulum adımları)</li>
       </ul>
     </div>
 
     <div class="person-card baris">
       <div class="avatar av-b">BK</div>
       <div class="person-name">Barış Küçükkaya</div>
-      <div class="person-role">📡 Feedback & Auth Sistemi</div>
+      <div class="person-role">🧪 Test & Rezervasyon Sistemi</div>
       <ul class="task-list">
-        <li>Authentication sistemi kur (JWT/session)</li>
-        <li>Feedback API endpoint'lerini yaz</li>
-        <li>Fake feedback önleme mekanizması</li>
-        <li>İstatistik & raporlama API'si</li>
-        <li>Kullanıcı doğrulama (öğrenci kontrolü)</li>
-        <li>Security review yap</li>
-        <li>Final rapor "Sistem Güvenliği" bölümü</li>
+        <li>Reservation API endpoint'leri yaz</li>
+        <li>Çakışan rezervasyon kontrolünü implemente et</li>
+        <li>pytest ortamını kur (conftest.py)</li>
+        <li>Auth & rezervasyon unit testleri yaz</li>
+        <li>Entegrasyon testleri yaz (min. 8 test)</li>
+        <li>Bug raporu ve fix süreci yönet</li>
+        <li>Validation raporu (W12) hazırla</li>
       </ul>
     </div>
   </div>
@@ -373,11 +373,11 @@
       <div class="week-tasks">
         <h4>🚀 Kurulum & Temel İskelet</h4>
         <div class="task-chips">
-          <span class="chip chip-e">Emre → Flask proje yapısı</span>
-          <span class="chip chip-e">Emre → DB şeması (User, Library, StudyArea, Reservation, Feedback)</span>
-          <span class="chip chip-b">Barış → JWT auth sistemi başlangıç</span>
-          <span class="chip chip-s">Sirac → Mevcut demo'yu repo'ya entegre et</span>
-          <span class="chip chip-r">Reis → Test ortamı kurulumu (pytest)</span>
+          <span class="chip chip-s">Sirac → Flask proje yapısı</span>
+          <span class="chip chip-s">Sirac → DB şeması (User, Library, StudyArea, Reservation, Feedback)</span>
+          <span class="chip chip-e">Emre → JWT auth sistemi başlangıç</span>
+          <span class="chip chip-r">Reis → Mevcut demo'yu repo'ya entegre et</span>
+          <span class="chip chip-b">Barış → Test ortamı kurulumu (pytest)</span>
           <span class="chip chip-all">Tüm ekip → Sprint 2 Jira backlog planlama</span>
         </div>
         <div class="week-note">⚠️ Bu hafta sonuna kadar proje çalışır hale gelmeli (local). Herkes kendi branch'inde çalışsın.</div>
@@ -389,12 +389,12 @@
       <div class="week-tasks">
         <h4>⚙️ Çekirdek API Geliştirme</h4>
         <div class="task-chips">
-          <span class="chip chip-e">Emre → GET /libraries, GET /libraries/:id/occupancy</span>
-          <span class="chip chip-b">Barış → POST /auth/login, POST /auth/register</span>
-          <span class="chip chip-b">Barış → POST /feedback, GET /feedback/:libraryId</span>
-          <span class="chip chip-r">Reis → POST /reservations, GET /reservations/:userId</span>
-          <span class="chip chip-s">Sirac → Dashboard'u GET /libraries API'sine bağla</span>
-          <span class="chip chip-r">Reis → Auth unit testleri yaz</span>
+          <span class="chip chip-s">Sirac → GET /libraries, GET /libraries/:id/occupancy</span>
+          <span class="chip chip-e">Emre → POST /auth/login, POST /auth/register</span>
+          <span class="chip chip-e">Emre → POST /feedback, GET /feedback/:libraryId</span>
+          <span class="chip chip-b">Barış → POST /reservations, GET /reservations/:userId</span>
+          <span class="chip chip-r">Reis → Dashboard'u GET /libraries API'sine bağla</span>
+          <span class="chip chip-b">Barış → Auth unit testleri yaz</span>
         </div>
         <div class="week-note">🎯 Hedef: Dashboard canlı veriyle çalışsın. Feedback gönderme ve alma çalışsın.</div>
       </div>
@@ -405,12 +405,12 @@
       <div class="week-tasks">
         <h4>🔗 Entegrasyon & Eksik Özellikler</h4>
         <div class="task-chips">
-          <span class="chip chip-r">Reis → Rezervasyon çakışma kontrolü</span>
-          <span class="chip chip-b">Barış → Fake feedback filtresi (rate limiting)</span>
-          <span class="chip chip-e">Emre → Admin istatistik API'si (peak hours, daily usage)</span>
-          <span class="chip chip-s">Sirac → Rezervasyon & feedback formları API'ye bağla</span>
-          <span class="chip chip-s">Sirac → Admin dashboard gerçek grafikler</span>
-          <span class="chip chip-r">Reis → Rezervasyon unit & entegrasyon testleri</span>
+          <span class="chip chip-b">Barış → Rezervasyon çakışma kontrolü</span>
+          <span class="chip chip-e">Emre → Fake feedback filtresi (rate limiting)</span>
+          <span class="chip chip-s">Sirac → Admin istatistik API'si (peak hours, daily usage)</span>
+          <span class="chip chip-r">Reis → Rezervasyon & feedback formları API'ye bağla</span>
+          <span class="chip chip-r">Reis → Admin dashboard gerçek grafikler</span>
+          <span class="chip chip-b">Barış → Rezervasyon unit & entegrasyon testleri</span>
         </div>
         <div class="week-note">🎯 Hedef: Tüm 4 temel özellik end-to-end çalışır halde. İlk PR review toplantısı yapın.</div>
       </div>
@@ -421,12 +421,12 @@
       <div class="week-tasks">
         <h4>🧪 Sistem Doğrulama & Test (W10-12 Roadmap)</h4>
         <div class="task-chips">
-          <span class="chip chip-r">Reis → Tam test suite çalıştır, hata raporu hazırla</span>
-          <span class="chip chip-b">Barış → Security review (injection, auth bypass)</span>
-          <span class="chip chip-e">Emre → Performans testi (çok kullanıcı simulasyonu)</span>
-          <span class="chip chip-s">Sirac → Cross-browser & mobil test</span>
+          <span class="chip chip-b">Barış → Tam test suite çalıştır, hata raporu hazırla</span>
+          <span class="chip chip-e">Emre → Security review (injection, auth bypass)</span>
+          <span class="chip chip-s">Sirac → Performans testi (çok kullanıcı simulasyonu)</span>
+          <span class="chip chip-r">Reis → Cross-browser & mobil test</span>
           <span class="chip chip-all">Tüm ekip → Bug fix sprint</span>
-          <span class="chip chip-e">Emre → Swagger/API doc güncelle</span>
+          <span class="chip chip-s">Sirac → Swagger/API doc güncelle</span>
         </div>
         <div class="week-note">✅ Bu hafta sonunda: tüm testler geçiyor, kritik bug yok, sistem stabil.</div>
       </div>
@@ -437,10 +437,10 @@
       <div class="week-tasks">
         <h4>📝 Final Hazırlıkları (W13-14 Roadmap)</h4>
         <div class="task-chips">
-          <span class="chip chip-s">Sirac → Demo.html final polish + sunum versiyonu</span>
-          <span class="chip chip-e">Emre → README.md tam doldur (kurulum, deployment)</span>
-          <span class="chip chip-b">Barış → Final rapor: Güvenlik & Feedback bölümü</span>
-          <span class="chip chip-r">Reis → Final rapor: Test & Doğrulama bölümü</span>
+          <span class="chip chip-r">Reis → Demo.html final polish + sunum versiyonu</span>
+          <span class="chip chip-s">Sirac → README.md tam doldur (kurulum, deployment)</span>
+          <span class="chip chip-e">Emre → Final rapor: Güvenlik & Feedback bölümü</span>
+          <span class="chip chip-b">Barış → Final rapor: Test & Doğrulama bölümü</span>
           <span class="chip chip-all">Tüm ekip → Final rapor birleştirme ve review</span>
           <span class="chip chip-all">Tüm ekip → Sunum slide'ları güncelle (gerçek ekran görüntüleri)</span>
         </div>
@@ -455,7 +455,7 @@
         <div class="task-chips">
           <span class="chip chip-all">Tüm ekip → Final rapor son kontrol & teslim</span>
           <span class="chip chip-all">Tüm ekip → Sunum prova (en az 2 kez)</span>
-          <span class="chip chip-s">Sirac → Canlı demo sürümü (tam çalışır sistem)</span>
+          <span class="chip chip-r">Reis → Canlı demo sürümü (tam çalışır sistem)</span>
           <span class="chip chip-all">Tüm ekip → Q&A hazırlığı (beklenen sorular listesi)</span>
         </div>
         <div class="week-note" style="color:#15803d;font-weight:600">🏁 SON TESLİM – Tüm deliverable'lar tamamlanmış olmalı!</div>
@@ -479,16 +479,16 @@
         </tr>
       </thead>
       <tbody>
-        <tr><td>SP2-01</td><td>Flask proje yapısı & klasör düzeni</td><td>Emre</td><td><span class="pri pri-high">YÜK</span></td><td><span class="tag-todo">TO DO</span></td><td>3 saat</td></tr>
-        <tr><td>SP2-02</td><td>SQLAlchemy modelleri (6 entity)</td><td>Emre</td><td><span class="pri pri-high">YÜK</span></td><td><span class="tag-todo">TO DO</span></td><td>4 saat</td></tr>
-        <tr><td>SP2-03</td><td>JWT Authentication (login/register)</td><td>Barış</td><td><span class="pri pri-high">YÜK</span></td><td><span class="tag-todo">TO DO</span></td><td>5 saat</td></tr>
-        <tr><td>SP2-04</td><td>Occupancy GET API endpoint</td><td>Emre</td><td><span class="pri pri-high">YÜK</span></td><td><span class="tag-todo">TO DO</span></td><td>3 saat</td></tr>
-        <tr><td>SP2-05</td><td>Feedback POST & GET API</td><td>Barış</td><td><span class="pri pri-high">YÜK</span></td><td><span class="tag-todo">TO DO</span></td><td>4 saat</td></tr>
-        <tr><td>SP2-06</td><td>Reservation POST & GET API</td><td>Reis</td><td><span class="pri pri-high">YÜK</span></td><td><span class="tag-todo">TO DO</span></td><td>5 saat</td></tr>
-        <tr><td>SP2-07</td><td>Dashboard → API bağlantısı (JS fetch)</td><td>Sirac</td><td><span class="pri pri-med">ORT</span></td><td><span class="tag-todo">TO DO</span></td><td>4 saat</td></tr>
-        <tr><td>SP2-08</td><td>Pytest ortamı & ilk 5 test</td><td>Reis</td><td><span class="pri pri-med">ORT</span></td><td><span class="tag-todo">TO DO</span></td><td>3 saat</td></tr>
-        <tr><td>SP2-09</td><td>README.md kurulum bölümü</td><td>Sirac</td><td><span class="pri pri-low">DÜŞÜK</span></td><td><span class="tag-todo">TO DO</span></td><td>1 saat</td></tr>
-        <tr><td>SP2-10</td><td>Admin istatistik API (peak hours)</td><td>Emre</td><td><span class="pri pri-med">ORT</span></td><td><span class="tag-todo">TO DO</span></td><td>4 saat</td></tr>
+        <tr><td>SP2-01</td><td>Flask proje yapısı & klasör düzeni</td><td>Sirac</td><td><span class="pri pri-high">YÜK</span></td><td><span class="tag-todo">TO DO</span></td><td>3 saat</td></tr>
+        <tr><td>SP2-02</td><td>SQLAlchemy modelleri (6 entity)</td><td>Sirac</td><td><span class="pri pri-high">YÜK</span></td><td><span class="tag-todo">TO DO</span></td><td>4 saat</td></tr>
+        <tr><td>SP2-03</td><td>JWT Authentication (login/register)</td><td>Emre</td><td><span class="pri pri-high">YÜK</span></td><td><span class="tag-todo">TO DO</span></td><td>5 saat</td></tr>
+        <tr><td>SP2-04</td><td>Occupancy GET API endpoint</td><td>Sirac</td><td><span class="pri pri-high">YÜK</span></td><td><span class="tag-todo">TO DO</span></td><td>3 saat</td></tr>
+        <tr><td>SP2-05</td><td>Feedback POST & GET API</td><td>Emre</td><td><span class="pri pri-high">YÜK</span></td><td><span class="tag-todo">TO DO</span></td><td>4 saat</td></tr>
+        <tr><td>SP2-06</td><td>Reservation POST & GET API</td><td>Barış</td><td><span class="pri pri-high">YÜK</span></td><td><span class="tag-todo">TO DO</span></td><td>5 saat</td></tr>
+        <tr><td>SP2-07</td><td>Dashboard → API bağlantısı (JS fetch)</td><td>Reis</td><td><span class="pri pri-med">ORT</span></td><td><span class="tag-todo">TO DO</span></td><td>4 saat</td></tr>
+        <tr><td>SP2-08</td><td>Pytest ortamı & ilk 5 test</td><td>Barış</td><td><span class="pri pri-med">ORT</span></td><td><span class="tag-todo">TO DO</span></td><td>3 saat</td></tr>
+        <tr><td>SP2-09</td><td>README.md kurulum bölümü</td><td>Reis</td><td><span class="pri pri-low">DÜŞÜK</span></td><td><span class="tag-todo">TO DO</span></td><td>1 saat</td></tr>
+        <tr><td>SP2-10</td><td>Admin istatistik API (peak hours)</td><td>Sirac</td><td><span class="pri pri-med">ORT</span></td><td><span class="tag-todo">TO DO</span></td><td>4 saat</td></tr>
         <tr><td>SP1-01</td><td>Use Case, Class, Sequence Diyagramları</td><td>Tüm Ekip</td><td><span class="pri pri-high">YÜK</span></td><td><span class="tag-done">DONE ✓</span></td><td>–</td></tr>
         <tr><td>SP1-02</td><td>Singleton Design Pattern (belge + kod fikri)</td><td>Tüm Ekip</td><td><span class="pri pri-high">YÜK</span></td><td><span class="tag-done">DONE ✓</span></td><td>–</td></tr>
         <tr><td>SP1-03</td><td>Midterm Rapor & Sunum</td><td>Tüm Ekip</td><td><span class="pri pri-high">YÜK</span></td><td><span class="tag-done">DONE ✓</span></td><td>–</td></tr>
@@ -509,7 +509,7 @@
           <td>Backend geliştirme gecikmesi (en büyük risk)</td>
           <td><span style="color:#b91c1c;font-weight:700">Yüksek</span></td>
           <td><span style="color:#b91c1c;font-weight:700">Kritik</span></td>
-          <td>Bu hafta mutlaka proje iskeleti kurulsun. Emre + Barış birlikte başlasın.</td>
+          <td>Bu hafta mutlaka proje iskeleti kurulsun. Sirac + Emre birlikte başlasın.</td>
         </tr>
         <tr>
           <td>Fake feedback önleme karmaşıklaşırsa zaman yetmez</td>
@@ -521,13 +521,13 @@
           <td>Entegrasyon sorunları (frontend ↔ backend)</td>
           <td>Orta</td>
           <td>Yüksek</td>
-          <td>API sözleşmesini (endpoint + response format) hafta 9'da belgele. Sirac buna göre frontend yaz.</td>
+          <td>API sözleşmesini (endpoint + response format) hafta 9'da belgele. Reis buna göre frontend yaz.</td>
         </tr>
         <tr>
           <td>Test coverage düşük kalırsa final notu etkilenir</td>
           <td>Orta</td>
           <td>Orta</td>
-          <td>Reis her hafta en az 5 yeni test yazar. Coverage %60 hedefi.</td>
+          <td>Barış her hafta en az 5 yeni test yazar. Coverage %60 hedefi.</td>
         </tr>
         <tr>
           <td>Gerçek kütüphane verisi / sensör yoksa sistem simüle kalır</td>
