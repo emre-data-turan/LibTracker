@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LibTracker – Ekip Planı | Rebs Dev</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  :root {
+    --primary: #1a1f5e; --accent: #4f6ef7; --green: #22c55e;
+    --yellow: #f59e0b; --red: #ef4444; --orange: #f97316;
+    --bg: #f0f2ff; --card: #fff; --text: #1e293b; --muted: #64748b;
+    --border: #e2e8f0;
+  }
+  body { font-family:'Segoe UI',sans-serif; background:var(--bg); color:var(--text); }
+
+  /* NAV */
+  nav {
+    background:var(--primary); padding:0 2rem; height:58px;
+    display:flex; align-items:center; justify-content:space-between;
+    position:sticky; top:0; z-index:100; box-shadow:0 2px 12px rgba(0,0,0,.3);
+  }
+  .nav-logo { color:#fff; font-size:1.3rem; font-weight:700; }
+  .nav-logo span { color:#7c9eff; }
+  .nav-right { color:#aab4d4; font-size:.85rem; }
+
+  /* HERO */
+  .hero {
+    background:linear-gradient(135deg,var(--primary) 0%,#2d3ab5 100%);
+    padding:2.5rem 2rem; text-align:center; color:#fff;
+  }
+  .hero h1 { font-size:2rem; margin-bottom:.4rem; }
+  .hero p { color:#aab4d4; font-size:.95rem; }
+  .hero-badges { display:flex; gap:.8rem; justify-content:center; margin-top:1rem; flex-wrap:wrap; }
+  .hbadge {
+    padding:5px 14px; border-radius:20px; font-size:.8rem; font-weight:600;
+    border:1px solid rgba(255,255,255,.2); background:rgba(255,255,255,.1);
+    color:#fff;
+  }
+
+  /* LAYOUT */
+  .container { max-width:1180px; margin:0 auto; padding:2rem; }
+  .section-title {
+    font-size:1.15rem; font-weight:800; color:var(--primary);
+    margin:2rem 0 1rem; padding-bottom:.5rem;
+    border-bottom:3px solid var(--accent); display:inline-block;
+  }
+
+  /* 2-COL */
+  .two-col { display:grid; grid-template-columns:1fr 1fr; gap:1.2rem; }
+  .three-col { display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; }
+
+  /* CARD */
+  .card {
+    background:var(--card); border-radius:14px; padding:1.4rem;
+    box-shadow:0 2px 12px rgba(0,0,0,.07); border:1px solid var(--border);
+  }
+  .card h3 { font-size:.95rem; font-weight:700; margin-bottom:.9rem; color:var(--primary); }
+
+  /* STATUS LIST */
+  .check-list { list-style:none; }
+  .check-list li {
+    display:flex; align-items:flex-start; gap:.6rem;
+    padding:.5rem 0; border-bottom:1px solid #f1f5f9;
+    font-size:.88rem;
+  }
+  .check-list li:last-child { border-bottom:none; }
+  .ci { font-size:1rem; flex-shrink:0; margin-top:1px; }
+
+  /* PRIORITY BADGE */
+  .pri {
+    font-size:.7rem; font-weight:700; padding:2px 8px; border-radius:10px;
+    text-transform:uppercase; letter-spacing:.4px; flex-shrink:0;
+  }
+  .pri-high   { background:#fee2e2; color:#b91c1c; }
+  .pri-med    { background:#fef9c3; color:#854d0e; }
+  .pri-low    { background:#dcfce7; color:#15803d; }
+
+  /* PERSON CARDS */
+  .person-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; }
+  .person-card {
+    background:var(--card); border-radius:14px; padding:1.3rem;
+    box-shadow:0 2px 12px rgba(0,0,0,.07); border:1px solid var(--border);
+    border-top:4px solid var(--accent);
+  }
+  .person-card.emre  { border-top-color:#4f6ef7; }
+  .person-card.sirac { border-top-color:#22c55e; }
+  .person-card.reis  { border-top-color:#f59e0b; }
+  .person-card.baris { border-top-color:#ef4444; }
+  .avatar {
+    width:44px; height:44px; border-radius:50%; display:flex;
+    align-items:center; justify-content:center; color:#fff;
+    font-weight:800; font-size:1.1rem; margin-bottom:.8rem;
+  }
+  .av-e { background:#4f6ef7; } .av-s { background:#22c55e; }
+  .av-r { background:#f59e0b; } .av-b { background:#ef4444; }
+  .person-name { font-weight:700; font-size:.95rem; }
+  .person-role { font-size:.78rem; color:var(--muted); margin-bottom:.8rem; }
+  .task-list { list-style:none; }
+  .task-list li {
+    font-size:.82rem; padding:.35rem 0; border-bottom:1px solid #f1f5f9;
+    display:flex; align-items:flex-start; gap:.4rem;
+  }
+  .task-list li:last-child { border-bottom:none; }
+  .task-list li::before { content:'→'; color:var(--accent); flex-shrink:0; }
+
+  /* TIMELINE */
+  .timeline { position:relative; }
+  .week-row {
+    display:grid; grid-template-columns:130px 1fr;
+    gap:1rem; margin-bottom:1rem; align-items:start;
+  }
+  .week-label {
+    background:var(--primary); color:#fff; border-radius:10px;
+    padding:.6rem .8rem; text-align:center; font-weight:700;
+    font-size:.82rem; line-height:1.3;
+  }
+  .week-label span { font-size:.72rem; font-weight:400; opacity:.7; display:block; }
+  .week-tasks {
+    background:var(--card); border-radius:12px; padding:1rem 1.2rem;
+    border:1px solid var(--border); box-shadow:0 1px 6px rgba(0,0,0,.05);
+  }
+  .week-tasks h4 { font-size:.88rem; font-weight:700; color:var(--primary); margin-bottom:.6rem; }
+  .task-chips { display:flex; flex-wrap:wrap; gap:.4rem; }
+  .chip {
+    font-size:.76rem; padding:3px 10px; border-radius:10px;
+    font-weight:500;
+  }
+  .chip-e { background:#dbeafe; color:#1d4ed8; }
+  .chip-s { background:#dcfce7; color:#15803d; }
+  .chip-r { background:#fef9c3; color:#854d0e; }
+  .chip-b { background:#fee2e2; color:#b91c1c; }
+  .chip-all { background:#f1f0ff; color:#5b21b6; }
+  .week-note { font-size:.8rem; color:var(--muted); margin-top:.5rem; font-style:italic; }
+
+  /* SPRINT TABLE */
+  table { width:100%; border-collapse:collapse; font-size:.85rem; }
+  th { background:var(--primary); color:#fff; padding:.7rem 1rem; text-align:left; font-weight:600; }
+  td { padding:.65rem 1rem; border-bottom:1px solid var(--border); vertical-align:top; }
+  tr:last-child td { border-bottom:none; }
+  tr:nth-child(even) td { background:#f8faff; }
+  .tag-done  { background:#dcfce7; color:#15803d; padding:2px 8px; border-radius:8px; font-size:.75rem; font-weight:700; }
+  .tag-todo  { background:#fee2e2; color:#b91c1c; padding:2px 8px; border-radius:8px; font-size:.75rem; font-weight:700; }
+  .tag-inprog{ background:#fef9c3; color:#854d0e; padding:2px 8px; border-radius:8px; font-size:.75rem; font-weight:700; }
+
+  /* RISK TABLE */
+  .risk-row td:first-child { font-weight:600; }
+
+  /* STAT BAR */
+  .stat-strip { display:grid; grid-template-columns:repeat(5,1fr); gap:.8rem; margin-bottom:1.5rem; }
+  .stat-box {
+    background:var(--card); border-radius:12px; padding:1rem; text-align:center;
+    border:1px solid var(--border); box-shadow:0 1px 6px rgba(0,0,0,.05);
+  }
+  .stat-val { font-size:1.8rem; font-weight:800; color:var(--primary); }
+  .stat-lbl { font-size:.75rem; color:var(--muted); margin-top:2px; }
+
+  /* PROGRESS */
+  .prog-wrap { margin:.5rem 0; }
+  .prog-label { display:flex; justify-content:space-between; font-size:.8rem; color:var(--muted); margin-bottom:3px; }
+  .prog-bar { height:8px; background:#e2e8f0; border-radius:8px; overflow:hidden; }
+  .prog-fill { height:100%; border-radius:8px; }
+
+  /* FOOTER */
+  footer {
+    text-align:center; padding:1.5rem; color:var(--muted); font-size:.8rem;
+    border-top:1px solid var(--border); margin-top:2rem;
+  }
+
+  @media(max-width:900px){
+    .person-grid { grid-template-columns:1fr 1fr; }
+    .two-col { grid-template-columns:1fr; }
+    .stat-strip { grid-template-columns:repeat(3,1fr); }
+    .three-col { grid-template-columns:1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">Lib<span>Tracker</span> – Ekip Planı</div>
+  <div class="nav-right">Rebs Dev &nbsp;·&nbsp; Güncelleme: Nisan 2026</div>
+</nav>
+
+<div class="hero">
+  <h1>Rebs Dev – Proje Durum & Görev Planı</h1>
+  <p>Tüm Documentation dosyaları analiz edilerek hazırlanmıştır.</p>
+  <div class="hero-badges">
+    <span class="hbadge">👤 Emre Turan</span>
+    <span class="hbadge">👤 Sirac Ketenoglu</span>
+    <span class="hbadge">👤 Reis Yıldız</span>
+    <span class="hbadge">👤 Barış Küçükkaya</span>
+    <span class="hbadge">📅 Hafta 9 → 14</span>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- DURUM ÖZETİ -->
+  <div class="stat-strip">
+    <div class="stat-box">
+      <div class="stat-val" style="color:#22c55e">8</div>
+      <div class="stat-lbl">Tamamlanan Belge</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-val" style="color:#ef4444">6</div>
+      <div class="stat-lbl">Eksik / Başlanmamış</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-val">~35%</div>
+      <div class="stat-lbl">Genel Tamamlanma</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-val" style="color:#f59e0b">5</div>
+      <div class="stat-lbl">Kalan Hafta</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-val">4</div>
+      <div class="stat-lbl">Temel Özellik</div>
+    </div>
+  </div>
+
+  <!-- GÜÇ / EKSİK ANALİZİ -->
+  <div class="section-title">📊 Belge Analizi – Ne İyi, Ne Eksik?</div>
+  <div class="two-col">
+
+    <div class="card">
+      <h3>✅ Güçlü Yönler (Tamamlananlar)</h3>
+      <ul class="check-list">
+        <li><span class="ci">✅</span><div><strong>Proje Vizyonu & Charter</strong><br><span style="color:var(--muted);font-size:.8rem">Açık problem tanımı, hedef kitle, vizyon cümlesi – Midterm Report'ta mükemmel.</span></div></li>
+        <li><span class="ci">✅</span><div><strong>4 Persona (Damla, Barış, Can, Zeynep)</strong><br><span style="color:var(--muted);font-size:.8rem">Week-3 PDF'i + sunum: gerçekçi, detaylı, senaryolu.</span></div></li>
+        <li><span class="ci">✅</span><div><strong>User Stories (8 adet)</strong><br><span style="color:var(--muted);font-size:.8rem">Öğrenci, yönetim, geliştirici bakış açılarını kapsıyor.</span></div></li>
+        <li><span class="ci">✅</span><div><strong>Mimari Karar – Layered Architecture</strong><br><span style="color:var(--muted);font-size:.8rem">Kalite atribütleri (Simplicity, Accuracy, Scalability) ile gerekçelendirilmiş.</span></div></li>
+        <li><span class="ci">✅</span><div><strong>UML Diyagramları (3 adet)</strong><br><span style="color:var(--muted);font-size:.8rem">Use Case, Class, Sequence – W5 Lab PDF'i içeriyor.</span></div></li>
+        <li><span class="ci">✅</span><div><strong>Singleton Design Pattern</strong><br><span style="color:var(--muted);font-size:.8rem">W6 PDF'i: seçim gerekçesi + Python __new__ implementasyonu anlatılmış.</span></div></li>
+        <li><span class="ci">✅</span><div><strong>GitHub & Jira Yönetimi</strong><br><span style="color:var(--muted);font-size:.8rem">W7 PDF'i: branch'ler, PR'lar, sprint takibi mevcut.</span></div></li>
+        <li><span class="ci">✅</span><div><strong>İnteraktif Demo (demo.html)</strong><br><span style="color:var(--muted);font-size:.8rem">4 ekranlı, Chart.js + gerçek zamanlı simülasyon, sunum için hazır.</span></div></li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>❌ Kritik Eksikler (Yapılması Gerekenler)</h3>
+      <ul class="check-list">
+        <li><span class="ci">🔴</span><div><strong>Backend Kodu Yok</strong><span class="pri pri-high" style="margin-left:6px">YÜKSEKÖNCELİK</span><br><span style="color:var(--muted);font-size:.8rem">Repo'da sadece demo.html var. Python/Flask API yazılmadı.</span></div></li>
+        <li><span class="ci">🔴</span><div><strong>Veritabanı Şeması Yok</strong><span class="pri pri-high" style="margin-left:6px">YÜKSEKÖNCELİK</span><br><span style="color:var(--muted);font-size:.8rem">Class Diagram var ama SQL/ORM modelleri oluşturulmadı.</span></div></li>
+        <li><span class="ci">🔴</span><div><strong>Authentication Sistemi Yok</strong><span class="pri pri-high" style="margin-left:6px">YÜKSEKÖNCELİK</span><br><span style="color:var(--muted);font-size:.8rem">Login use case var ama kod yok. Fake feedback önleme için şart.</span></div></li>
+        <li><span class="ci">🟡</span><div><strong>Gerçek Frontend Yok</strong><span class="pri pri-med" style="margin-left:6px">ORTA</span><br><span style="color:var(--muted);font-size:.8rem">Demo static HTML. React/Vue ya da gerçek API bağlantısı yapılmalı.</span></div></li>
+        <li><span class="ci">🟡</span><div><strong>Test Planı & Unit Testler Yok</strong><span class="pri pri-med" style="margin-left:6px">ORTA</span><br><span style="color:var(--muted);font-size:.8rem">W10-12 "System Validation" planı var ama test case'ler yazılmadı.</span></div></li>
+        <li><span class="ci">🟡</span><div><strong>API Dokümantasyonu Yok</strong><span class="pri pri-med" style="margin-left:6px">ORTA</span><br><span style="color:var(--muted);font-size:.8rem">Endpoint listesi, request/response formatları belgelenmemiş.</span></div></li>
+        <li><span class="ci">🟢</span><div><strong>README.md Eksik/Yetersiz</strong><span class="pri pri-low" style="margin-left:6px">DÜŞÜK</span><br><span style="color:var(--muted);font-size:.8rem">Repo'da minimal README var. Kurulum adımları, ekip bilgisi eklenmeli.</span></div></li>
+        <li><span class="ci">🟢</span><div><strong>Sprint 2 Backlog Planlanmadı</strong><span class="pri pri-low" style="margin-left:6px">DÜŞÜK</span><br><span style="color:var(--muted);font-size:.8rem">Jira'da sadece Sprint 1 var. Geriye kalan sprintler planlanmadı.</span></div></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- TAMAMLANMA DURUMU -->
+  <div class="section-title" style="margin-top:2rem">📈 Özellik Bazlı Tamamlanma</div>
+  <div class="card" style="margin-bottom:1.5rem">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem">
+      <div>
+        <div class="prog-wrap">
+          <div class="prog-label"><span>Proje Planlama & Dokümantasyon</span><span>90%</span></div>
+          <div class="prog-bar"><div class="prog-fill" style="width:90%;background:#22c55e"></div></div>
+        </div>
+        <div class="prog-wrap">
+          <div class="prog-label"><span>Mimari & Tasarım Kararları</span><span>85%</span></div>
+          <div class="prog-bar"><div class="prog-fill" style="width:85%;background:#22c55e"></div></div>
+        </div>
+        <div class="prog-wrap">
+          <div class="prog-label"><span>UML & Modelleme</span><span>80%</span></div>
+          <div class="prog-bar"><div class="prog-fill" style="width:80%;background:#22c55e"></div></div>
+        </div>
+        <div class="prog-wrap">
+          <div class="prog-label"><span>UI / Demo</span><span>60%</span></div>
+          <div class="prog-bar"><div class="prog-fill" style="width:60%;background:#f59e0b"></div></div>
+        </div>
+      </div>
+      <div>
+        <div class="prog-wrap">
+          <div class="prog-label"><span>Backend Geliştirme</span><span>5%</span></div>
+          <div class="prog-bar"><div class="prog-fill" style="width:5%;background:#ef4444"></div></div>
+        </div>
+        <div class="prog-wrap">
+          <div class="prog-label"><span>Veritabanı</span><span>0%</span></div>
+          <div class="prog-bar"><div class="prog-fill" style="width:0%;background:#ef4444"></div></div>
+        </div>
+        <div class="prog-wrap">
+          <div class="prog-label"><span>Test & Doğrulama</span><span>0%</span></div>
+          <div class="prog-bar"><div class="prog-fill" style="width:0%;background:#ef4444"></div></div>
+        </div>
+        <div class="prog-wrap">
+          <div class="prog-label"><span>Final Rapor & Sunum</span><span>15%</span></div>
+          <div class="prog-bar"><div class="prog-fill" style="width:15%;background:#ef4444"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- KİŞİ BAZLI GÖREVLER -->
+  <div class="section-title">👥 Kişi Bazlı Görev Dağılımı</div>
+  <div class="person-grid">
+
+    <div class="person-card emre">
+      <div class="avatar av-e">ET</div>
+      <div class="person-name">Emre Turan</div>
+      <div class="person-role">🏗️ Backend Lead / Repo Sahibi</div>
+      <ul class="task-list">
+        <li>Flask/FastAPI proje iskeletini kur</li>
+        <li>Veritabanı modelleri (SQLAlchemy)</li>
+        <li>Occupancy API endpoint'leri yaz</li>
+        <li>Singleton DB bağlantısını implemente et</li>
+        <li>GitHub Actions CI pipeline</li>
+        <li>API dokümantasyonu (Swagger/README)</li>
+        <li>Sprint 2-3 Jira backlog oluştur</li>
+      </ul>
+    </div>
+
+    <div class="person-card sirac">
+      <div class="avatar av-s">SK</div>
+      <div class="person-name">Sirac Ketenoglu</div>
+      <div class="person-role">🎨 Frontend / Demo Lead</div>
+      <ul class="task-list">
+        <li>Demo.html'i gerçek API'ye bağla</li>
+        <li>Reservation sistemi UI → backend entegrasyon</li>
+        <li>Feedback formu API bağlantısı</li>
+        <li>Admin dashboard gerçek veriyle çalıştır</li>
+        <li>Mobil uyumluluk & responsive test</li>
+        <li>README.md güncelle (kurulum adımları)</li>
+        <li>Final sunum demo güncellemesi</li>
+      </ul>
+    </div>
+
+    <div class="person-card reis">
+      <div class="avatar av-r">RY</div>
+      <div class="person-name">Reis Yıldız</div>
+      <div class="person-role">🧪 Test & Rezervasyon Sistemi</div>
+      <ul class="task-list">
+        <li>Reservation API endpoint'leri yaz</li>
+        <li>Test planı oluştur (test case listesi)</li>
+        <li>Unit testler yaz (pytest)</li>
+        <li>Oturum & auth akışını test et</li>
+        <li>Çakışan rezervasyon senaryoları test</li>
+        <li>Bug raporu ve fix süreci yönet</li>
+        <li>Validation raporu (W12) hazırla</li>
+      </ul>
+    </div>
+
+    <div class="person-card baris">
+      <div class="avatar av-b">BK</div>
+      <div class="person-name">Barış Küçükkaya</div>
+      <div class="person-role">📡 Feedback & Auth Sistemi</div>
+      <ul class="task-list">
+        <li>Authentication sistemi kur (JWT/session)</li>
+        <li>Feedback API endpoint'lerini yaz</li>
+        <li>Fake feedback önleme mekanizması</li>
+        <li>İstatistik & raporlama API'si</li>
+        <li>Kullanıcı doğrulama (öğrenci kontrolü)</li>
+        <li>Security review yap</li>
+        <li>Final rapor "Sistem Güvenliği" bölümü</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- HAFTALIK PLAN -->
+  <div class="section-title" style="margin-top:2rem">📅 Haftalık Yol Haritası (Hafta 9–14)</div>
+  <div class="timeline">
+
+    <div class="week-row">
+      <div class="week-label">
+        HAFTA 9<span>Nisan 25–May 1</span>
+        <div style="font-size:.7rem;margin-top:4px;background:rgba(255,255,255,.15);border-radius:4px;padding:2px 4px">ŞUAN 📍</div>
+      </div>
+      <div class="week-tasks">
+        <h4>🚀 Kurulum & Temel İskelet</h4>
+        <div class="task-chips">
+          <span class="chip chip-e">Emre → Flask proje yapısı</span>
+          <span class="chip chip-e">Emre → DB şeması (User, Library, StudyArea, Reservation, Feedback)</span>
+          <span class="chip chip-b">Barış → JWT auth sistemi başlangıç</span>
+          <span class="chip chip-s">Sirac → Mevcut demo'yu repo'ya entegre et</span>
+          <span class="chip chip-r">Reis → Test ortamı kurulumu (pytest)</span>
+          <span class="chip chip-all">Tüm ekip → Sprint 2 Jira backlog planlama</span>
+        </div>
+        <div class="week-note">⚠️ Bu hafta sonuna kadar proje çalışır hale gelmeli (local). Herkes kendi branch'inde çalışsın.</div>
+      </div>
+    </div>
+
+    <div class="week-row">
+      <div class="week-label">HAFTA 10<span>May 2–8</span></div>
+      <div class="week-tasks">
+        <h4>⚙️ Çekirdek API Geliştirme</h4>
+        <div class="task-chips">
+          <span class="chip chip-e">Emre → GET /libraries, GET /libraries/:id/occupancy</span>
+          <span class="chip chip-b">Barış → POST /auth/login, POST /auth/register</span>
+          <span class="chip chip-b">Barış → POST /feedback, GET /feedback/:libraryId</span>
+          <span class="chip chip-r">Reis → POST /reservations, GET /reservations/:userId</span>
+          <span class="chip chip-s">Sirac → Dashboard'u GET /libraries API'sine bağla</span>
+          <span class="chip chip-r">Reis → Auth unit testleri yaz</span>
+        </div>
+        <div class="week-note">🎯 Hedef: Dashboard canlı veriyle çalışsın. Feedback gönderme ve alma çalışsın.</div>
+      </div>
+    </div>
+
+    <div class="week-row">
+      <div class="week-label">HAFTA 11<span>May 9–15</span></div>
+      <div class="week-tasks">
+        <h4>🔗 Entegrasyon & Eksik Özellikler</h4>
+        <div class="task-chips">
+          <span class="chip chip-r">Reis → Rezervasyon çakışma kontrolü</span>
+          <span class="chip chip-b">Barış → Fake feedback filtresi (rate limiting)</span>
+          <span class="chip chip-e">Emre → Admin istatistik API'si (peak hours, daily usage)</span>
+          <span class="chip chip-s">Sirac → Rezervasyon & feedback formları API'ye bağla</span>
+          <span class="chip chip-s">Sirac → Admin dashboard gerçek grafikler</span>
+          <span class="chip chip-r">Reis → Rezervasyon unit & entegrasyon testleri</span>
+        </div>
+        <div class="week-note">🎯 Hedef: Tüm 4 temel özellik end-to-end çalışır halde. İlk PR review toplantısı yapın.</div>
+      </div>
+    </div>
+
+    <div class="week-row">
+      <div class="week-label">HAFTA 12<span>May 16–22</span></div>
+      <div class="week-tasks">
+        <h4>🧪 Sistem Doğrulama & Test (W10-12 Roadmap)</h4>
+        <div class="task-chips">
+          <span class="chip chip-r">Reis → Tam test suite çalıştır, hata raporu hazırla</span>
+          <span class="chip chip-b">Barış → Security review (injection, auth bypass)</span>
+          <span class="chip chip-e">Emre → Performans testi (çok kullanıcı simulasyonu)</span>
+          <span class="chip chip-s">Sirac → Cross-browser & mobil test</span>
+          <span class="chip chip-all">Tüm ekip → Bug fix sprint</span>
+          <span class="chip chip-e">Emre → Swagger/API doc güncelle</span>
+        </div>
+        <div class="week-note">✅ Bu hafta sonunda: tüm testler geçiyor, kritik bug yok, sistem stabil.</div>
+      </div>
+    </div>
+
+    <div class="week-row">
+      <div class="week-label">HAFTA 13<span>May 23–29</span></div>
+      <div class="week-tasks">
+        <h4>📝 Final Hazırlıkları (W13-14 Roadmap)</h4>
+        <div class="task-chips">
+          <span class="chip chip-s">Sirac → Demo.html final polish + sunum versiyonu</span>
+          <span class="chip chip-e">Emre → README.md tam doldur (kurulum, deployment)</span>
+          <span class="chip chip-b">Barış → Final rapor: Güvenlik & Feedback bölümü</span>
+          <span class="chip chip-r">Reis → Final rapor: Test & Doğrulama bölümü</span>
+          <span class="chip chip-all">Tüm ekip → Final rapor birleştirme ve review</span>
+          <span class="chip chip-all">Tüm ekip → Sunum slide'ları güncelle (gerçek ekran görüntüleri)</span>
+        </div>
+        <div class="week-note">📌 Son PR'lar main'e merge edilsin. Repo temizlensin (stale branch silin).</div>
+      </div>
+    </div>
+
+    <div class="week-row">
+      <div class="week-label" style="background:#22c55e">HAFTA 14<span>May 30–Jun 5</span></div>
+      <div class="week-tasks" style="border-color:#22c55e;border-width:2px">
+        <h4>🎓 Final Teslim & Sunum</h4>
+        <div class="task-chips">
+          <span class="chip chip-all">Tüm ekip → Final rapor son kontrol & teslim</span>
+          <span class="chip chip-all">Tüm ekip → Sunum prova (en az 2 kez)</span>
+          <span class="chip chip-s">Sirac → Canlı demo sürümü (tam çalışır sistem)</span>
+          <span class="chip chip-all">Tüm ekip → Q&A hazırlığı (beklenen sorular listesi)</span>
+        </div>
+        <div class="week-note" style="color:#15803d;font-weight:600">🏁 SON TESLİM – Tüm deliverable'lar tamamlanmış olmalı!</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- SPRINT BACKLOG -->
+  <div class="section-title" style="margin-top:2rem">📋 Sprint 2 Backlog (Hafta 9–11)</div>
+  <div class="card" style="padding:0;overflow:hidden">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Görev</th>
+          <th>Kişi</th>
+          <th>Öncelik</th>
+          <th>Durum</th>
+          <th>Tahmini Süre</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>SP2-01</td><td>Flask proje yapısı & klasör düzeni</td><td>Emre</td><td><span class="pri pri-high">YÜK</span></td><td><span class="tag-todo">TO DO</span></td><td>3 saat</td></tr>
+        <tr><td>SP2-02</td><td>SQLAlchemy modelleri (6 entity)</td><td>Emre</td><td><span class="pri pri-high">YÜK</span></td><td><span class="tag-todo">TO DO</span></td><td>4 saat</td></tr>
+        <tr><td>SP2-03</td><td>JWT Authentication (login/register)</td><td>Barış</td><td><span class="pri pri-high">YÜK</span></td><td><span class="tag-todo">TO DO</span></td><td>5 saat</td></tr>
+        <tr><td>SP2-04</td><td>Occupancy GET API endpoint</td><td>Emre</td><td><span class="pri pri-high">YÜK</span></td><td><span class="tag-todo">TO DO</span></td><td>3 saat</td></tr>
+        <tr><td>SP2-05</td><td>Feedback POST & GET API</td><td>Barış</td><td><span class="pri pri-high">YÜK</span></td><td><span class="tag-todo">TO DO</span></td><td>4 saat</td></tr>
+        <tr><td>SP2-06</td><td>Reservation POST & GET API</td><td>Reis</td><td><span class="pri pri-high">YÜK</span></td><td><span class="tag-todo">TO DO</span></td><td>5 saat</td></tr>
+        <tr><td>SP2-07</td><td>Dashboard → API bağlantısı (JS fetch)</td><td>Sirac</td><td><span class="pri pri-med">ORT</span></td><td><span class="tag-todo">TO DO</span></td><td>4 saat</td></tr>
+        <tr><td>SP2-08</td><td>Pytest ortamı & ilk 5 test</td><td>Reis</td><td><span class="pri pri-med">ORT</span></td><td><span class="tag-todo">TO DO</span></td><td>3 saat</td></tr>
+        <tr><td>SP2-09</td><td>README.md kurulum bölümü</td><td>Sirac</td><td><span class="pri pri-low">DÜŞÜK</span></td><td><span class="tag-todo">TO DO</span></td><td>1 saat</td></tr>
+        <tr><td>SP2-10</td><td>Admin istatistik API (peak hours)</td><td>Emre</td><td><span class="pri pri-med">ORT</span></td><td><span class="tag-todo">TO DO</span></td><td>4 saat</td></tr>
+        <tr><td>SP1-01</td><td>Use Case, Class, Sequence Diyagramları</td><td>Tüm Ekip</td><td><span class="pri pri-high">YÜK</span></td><td><span class="tag-done">DONE ✓</span></td><td>–</td></tr>
+        <tr><td>SP1-02</td><td>Singleton Design Pattern (belge + kod fikri)</td><td>Tüm Ekip</td><td><span class="pri pri-high">YÜK</span></td><td><span class="tag-done">DONE ✓</span></td><td>–</td></tr>
+        <tr><td>SP1-03</td><td>Midterm Rapor & Sunum</td><td>Tüm Ekip</td><td><span class="pri pri-high">YÜK</span></td><td><span class="tag-done">DONE ✓</span></td><td>–</td></tr>
+        <tr><td>SP1-04</td><td>İnteraktif Demo (demo.html)</td><td>Sirac</td><td><span class="pri pri-med">ORT</span></td><td><span class="tag-done">DONE ✓</span></td><td>–</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- RİSK TABLOSU -->
+  <div class="section-title" style="margin-top:2rem">⚠️ Risk Analizi</div>
+  <div class="card" style="padding:0;overflow:hidden">
+    <table class="risk-row">
+      <thead>
+        <tr><th>Risk</th><th>Olasılık</th><th>Etki</th><th>Önlem</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Backend geliştirme gecikmesi (en büyük risk)</td>
+          <td><span style="color:#b91c1c;font-weight:700">Yüksek</span></td>
+          <td><span style="color:#b91c1c;font-weight:700">Kritik</span></td>
+          <td>Bu hafta mutlaka proje iskeleti kurulsun. Emre + Barış birlikte başlasın.</td>
+        </tr>
+        <tr>
+          <td>Fake feedback önleme karmaşıklaşırsa zaman yetmez</td>
+          <td>Orta</td>
+          <td>Orta</td>
+          <td>Basit rate limiting ile başla (IP bazlı), karmaşık ML bazlı filtre sonraya bırak.</td>
+        </tr>
+        <tr>
+          <td>Entegrasyon sorunları (frontend ↔ backend)</td>
+          <td>Orta</td>
+          <td>Yüksek</td>
+          <td>API sözleşmesini (endpoint + response format) hafta 9'da belgele. Sirac buna göre frontend yaz.</td>
+        </tr>
+        <tr>
+          <td>Test coverage düşük kalırsa final notu etkilenir</td>
+          <td>Orta</td>
+          <td>Orta</td>
+          <td>Reis her hafta en az 5 yeni test yazar. Coverage %60 hedefi.</td>
+        </tr>
+        <tr>
+          <td>Gerçek kütüphane verisi / sensör yoksa sistem simüle kalır</td>
+          <td>Yüksek</td>
+          <td>Düşük</td>
+          <td>Demo + seed data yeterli. Gerçek sensör entegrasyonu "gelecek çalışma" olarak raporda belirt.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ÖNERİLER -->
+  <div class="section-title" style="margin-top:2rem">💡 Ekip İçi Öneri & Kurallar</div>
+  <div class="three-col">
+    <div class="card">
+      <h3>🔀 Git Stratejisi</h3>
+      <ul class="check-list">
+        <li><span class="ci">→</span>Her özellik için ayrı branch: <code>feature/auth-system</code></li>
+        <li><span class="ci">→</span>PR açmadan önce kendi branch'ini test et</li>
+        <li><span class="ci">→</span>En az 1 kişi PR review yapmalı</li>
+        <li><span class="ci">→</span>main'e direkt push yasak</li>
+        <li><span class="ci">→</span>Commit mesajları anlamlı olsun: "Add JWT auth endpoint"</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>📞 İletişim</h3>
+      <ul class="check-list">
+        <li><span class="ci">→</span>Haftalık 1 toplantı (30 dk) – durum güncelleme</li>
+        <li><span class="ci">→</span>Blocker varsa aynı gün bildirin</li>
+        <li><span class="ci">→</span>Jira görevlerini güncel tutun</li>
+        <li><span class="ci">→</span>PR review 24 saat içinde yapılsın</li>
+        <li><span class="ci">→</span>Final öncesi 2 prova yapın</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>✅ Definition of Done</h3>
+      <ul class="check-list">
+        <li><span class="ci">→</span>Kod çalışıyor (local'de test edilmiş)</li>
+        <li><span class="ci">→</span>Unit test yazılmış</li>
+        <li><span class="ci">→</span>PR açılmış ve review edilmiş</li>
+        <li><span class="ci">→</span>Jira görevi "Done" yapılmış</li>
+        <li><span class="ci">→</span>Commit history temiz</li>
+      </ul>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  LibTracker &nbsp;·&nbsp; Rebs Dev (Emre, Sirac, Reis, Barış) &nbsp;·&nbsp; Tüm Documentation dosyaları analiz edilerek oluşturulmuştur &nbsp;·&nbsp; Nisan 2026
+</footer>
+
+</body>
+</html>
