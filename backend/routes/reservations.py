@@ -80,7 +80,7 @@ def create_reservation():
     if end <= start:
         return jsonify({"error": "end_time, start_time'dan sonra olmalı"}), 400
 
-    if start < datetime.now():
+    if start < datetime.now(start.tzinfo or timezone.utc):
         return jsonify({"error": "Geçmiş bir zaman için rezervasyon yapılamaz"}), 400
 
     area = StudyArea.query.get_or_404(study_area_id, description="Çalışma alanı bulunamadı")
@@ -99,10 +99,9 @@ def create_reservation():
         end_time=end,
     )
     db.session.add(reservation)
-
-    # Mevcut koltuk sayısını güncelle
-    if area.available_seats > 0:
-        area.available_seats -= 1
+    db.session.flush()
+    active_count = Reservation.query.filter_by(study_area_id=study_area_id, status="active").count()
+    area.available_seats = max(0, area.total_seats - active_count)
 
     db.session.commit()
     return jsonify({"message": "Rezervasyon oluşturuldu", "reservation": reservation.to_dict()}), 201
@@ -177,7 +176,9 @@ def cancel_reservation(reservation_id):
     reservation.status = "cancelled"
     area = StudyArea.query.get(reservation.study_area_id)
     if area:
-        area.available_seats = min(area.available_seats + 1, area.total_seats)
+        db.session.flush()
+        active_count = Reservation.query.filter_by(study_area_id=reservation.study_area_id, status="active").count()
+        area.available_seats = max(0, area.total_seats - active_count)
 
     db.session.commit()
     return jsonify({"message": "Rezervasyon iptal edildi"})
