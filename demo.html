@@ -373,15 +373,12 @@
     <div class="form-card">
       <h3>New Reservation</h3>
 
-      <label>Select Library / Study Area</label>
+      <label>Select Library</label>
       <select id="res-library">
-        <option>Main Library – Floor 1 (Quiet)</option>
-        <option>Main Library – Floor 2 (Group)</option>
-        <option>Engineering Library</option>
-        <option>Study Hall A</option>
-        <option>Study Hall B</option>
-        <option>Law Library</option>
-        <option>Science Reading Room</option>
+      </select>
+      
+      <label>Select Study Area</label>
+      <select id="res-area">
       </select>
 
       <label>Date</label>
@@ -603,6 +600,22 @@ function populateLibrarySelects(libs) {
     if (!sel) return;
     sel.innerHTML = libs.map(l => `<option value="${l.id}">${l.name}</option>`).join('');
   });
+  if(document.getElementById('res-library')) {
+    updateStudyAreas();
+  }
+}
+
+async function updateStudyAreas() {
+  const libId = document.getElementById('res-library').value;
+  if(!libId) return;
+  const r = await apiFetch(`/libraries/${libId}/occupancy`);
+  if(r && r.ok) {
+    const data = await r.json();
+    const sel = document.getElementById('res-area');
+    sel.innerHTML = data.study_areas.map(a => `<option value="${a.id}" data-seats="${a.total_seats}">${a.name}</option>`).join('');
+    selectedSeat = null;
+    renderSeatMap();
+  }
 }
 
 // ─── LIVE POLL ────────────────────────────────────────────
@@ -671,18 +684,27 @@ const SEAT_PATTERNS = {
   '17:00 – 19:00': [2, 7, 11, 16, 20, 26, 32, 38],
   '19:00 – 21:00': [4, 9, 17, 23, 29, 34],
 };
+let currentTotalSeats = 40;
 function getTakenSeats() {
   const timeSlot = (document.getElementById('res-time') || {}).value || '';
+  const areaSel = document.getElementById('res-area');
   const libId = parseInt((document.getElementById('res-library') || {}).value) || 1;
+  
+  if (areaSel && areaSel.selectedOptions.length > 0) {
+    currentTotalSeats = parseInt(areaSel.selectedOptions[0].getAttribute('data-seats')) || 40;
+  }
+  
   const base = SEAT_PATTERNS[timeSlot] || [3, 7, 12, 25];
   const shift = (libId - 1) * 3;
-  return base.map(s => ((s + shift - 1) % 40) + 1);
+  // Use modulo currentTotalSeats to prevent fake taken seats exceeding capacity
+  return base.map(s => ((s + shift - 1) % currentTotalSeats) + 1);
 }
 function renderSeatMap() {
   const map = document.getElementById('seatMap');
+  if(!map) return;
   map.innerHTML = '';
   const takenSeats = getTakenSeats();
-  for (let i = 1; i <= 40; i++) {
+  for (let i = 1; i <= currentTotalSeats; i++) {
     const taken = takenSeats.includes(i);
     const sel   = selectedSeat === i;
     const cls   = sel ? 'selected' : (taken ? 'taken' : 'free');
@@ -701,7 +723,7 @@ async function makeReservation() {
   if (!selectedSeat) { showToast('Please select a seat first', '⚠️'); return; }
   if (!TOKEN)        { showToast('Please log in to make a reservation', '⚠️'); return; }
 
-  const studyAreaId = parseInt(document.getElementById('res-library').value);
+  const studyAreaId = parseInt(document.getElementById('res-area').value);
   const date        = document.getElementById('res-date').value;
   if (!date) { showToast('Please select a date', '⚠️'); return; }
   const timeSlot    = document.getElementById('res-time').value;
@@ -856,7 +878,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   dateInput.max = maxDay.toISOString().split('T')[0];
 
   // Re-render seat map when library or time changes
-  document.getElementById('res-library').addEventListener('change', () => { selectedSeat = null; renderSeatMap(); });
+  document.getElementById('res-library').addEventListener('change', () => { updateStudyAreas(); });
+  document.getElementById('res-area').addEventListener('change', () => { selectedSeat = null; renderSeatMap(); });
   document.getElementById('res-time').addEventListener('change',    () => { selectedSeat = null; renderSeatMap(); });
 
   renderSeatMap();

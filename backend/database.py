@@ -53,10 +53,25 @@ class SystemDatabase:
         Gerçek sensör verisi olmadığından simülasyon kullanılır.
         """
         from datetime import datetime, time, timezone, timedelta
-        from models import Library, StudyArea, UsageStatistics
+        from models import Library, StudyArea, UsageStatistics, User
+        from werkzeug.security import generate_password_hash
         import random
 
         with self._app.app_context():
+            # Seed Admin User
+            admin_email = "admin"
+            admin_user = User.query.filter_by(email=admin_email).first()
+            if not admin_user:
+                admin_user = User(
+                    name="admin",
+                    email=admin_email,
+                    password_hash=generate_password_hash("admin"),
+                    is_admin=True,
+                    is_verified=True
+                )
+                db.session.add(admin_user)
+                db.session.commit()
+
             if Library.query.first():
                 return  # Zaten seed yapılmış
 

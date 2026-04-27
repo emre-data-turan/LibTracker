@@ -1,5 +1,6 @@
-from flask import Blueprint, jsonify
-from models import Library, StudyArea
+from flask import Blueprint, jsonify, request
+from flask_jwt_extended import jwt_required, get_jwt_identity
+from models import Library, StudyArea, User
 from database import db
 
 libraries_bp = Blueprint("libraries", __name__)
@@ -67,3 +68,83 @@ def get_library_occupancy(library_id):
         "study_areas": [a.to_dict() for a in areas],
         "total_available_seats": sum(a.available_seats for a in areas),
     })
+
+
+@libraries_bp.route("/", methods=["POST"])
+@jwt_required()
+def create_library():
+    """
+    Sadece adminlerin yeni kütüphane eklemesi için.
+    """
+    user_id = int(get_jwt_identity())
+    user = User.query.get(user_id)
+    if not user or not user.is_admin:
+        return jsonify({"error": "Unauthorized"}), 403
+
+    data = request.get_json() or {}
+    name = data.get("name")
+    location = data.get("location", "Bilinmiyor")
+    capacity = int(data.get("total_capacity", 0))
+
+    if not name or capacity <= 0:
+        return jsonify({"error": "Geçerli isim ve kapasite giriniz"}), 400
+
+    lib = Library(name=name, location=location, total_capacity=capacity, current_occupancy=0, is_open=True)
+    db.session.add(lib)
+    db.session.commit()
+
+    # Varsayılan çalışma alanları ekle (3 alan)
+    area_types = ["general", "silent", "group"]
+    for i, atype in enumerate(area_types, 1):
+        seats = capacity // 3
+        area = StudyArea(
+            library_id=lib.id,
+            name=f"{atype.capitalize()} Alan {i}",
+            total_seats=seats,
+            available_seats=seats,
+            area_type=atype,
+        )
+        db.session.add(area)
+    db.session.commit()
+
+    return jsonify({"message": "Kütüphane oluşturuldu", "library": lib.to_dict()}), 201
+
+
+@libraries_bp.route("/<int:library_id>", methods=["PUT"])
+@jwt_required()
+def update_library(library_id):
+    """
+    Sadece adminlerin kütüphane kapasite/doluluk güncellemesi için.
+    """
+    user_id = int(get_jwt_identity())
+    user = User.query.get(user_id)
+    if not user or not user.is_admin:
+        return jsonify({"error": "Unauthorized"}), 403
+
+    lib = Library.query.get_or_404(library_id)
+    data = request.get_json() or {}
+
+    if "name" in data:
+        lib.name = data["name"]
+    if "location" in data:
+        lib.location = data["location"]
+    
+    old_capacity = lib.total_capacity
+    if "total_capacity" in data:
+        lib.total_capacity = int(data["total_capacity"])
+    if "current_occupancy" in data:
+        lib.current_occupancy = int(data["current_occupancy"])
+
+    if lib.total_capacity != old_capacity:
+        # Kapasite değiştiyse çalışma alanlarının da koltuk sayısını orantılı güncelle
+        areas = StudyArea.query.filter_by(library_id=lib.id).all()
+        if areas:
+            new_seats_per_area = lib.total_capacity // len(areas)
+            for area in areas:
+                area.total_seats = new_seats_per_area
+                # Doluluk hesabı (basit tutuldu)
+                area.available_seats = new_seats_per_area
+
+    db.session.commit()
+    return jsonify({"message": "Kütüphane güncellendi", "library": lib.to_dict()})
+
