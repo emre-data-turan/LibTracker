@@ -214,6 +214,7 @@
     <button class="nav-tab" onclick="showPage('reserve')">Reserve a Seat</button>
     <button class="nav-tab" onclick="showPage('feedback')">Feedback <span class="nav-badge" id="feedCount">3</span></button>
     <button class="nav-tab" onclick="showPage('admin')">Admin View</button>
+    <button class="nav-tab" id="authBtn" style="margin-left:12px;border:1px solid rgba(255,255,255,.3)">Giriş / Kayıt</button>
   </div>
 </nav>
 
@@ -404,43 +405,88 @@
 <div class="toast" id="toast"></div>
 
 <script>
-// ─── DATA ─────────────────────────────────────────────────
-const libraries = [
-  { name: "Main Library – Floor 1", type: "Quiet Zone", capacity: 80, occupied: 24 },
-  { name: "Main Library – Floor 2", type: "Group Study", capacity: 60, occupied: 54 },
-  { name: "Engineering Library",    type: "Open Access", capacity: 50, occupied: 41 },
-  { name: "Study Hall A",            type: "Quiet Zone", capacity: 40, occupied: 8  },
-  { name: "Study Hall B",            type: "Open Access", capacity: 40, occupied: 38 },
-  { name: "Law Library",             type: "Quiet Zone", capacity: 35, occupied: 12 },
-  { name: "Science Reading Room",    type: "Group Study", capacity: 45, occupied: 35 },
-];
+const API = 'http://localhost:5000';
+let TOKEN = localStorage.getItem('lt_token') || null;
+let apiLibraries = [];
 
-const feedbacks = [
-  { user: "Damla K.", lib: "Main Library – Floor 1", busy: "Quiet", noise: "Silent",   comment: "Very few people, great for studying!", time: "10 min ago", tag: "quiet" },
-  { user: "Barış T.", lib: "Engineering Library",    busy: "Busy",  noise: "Moderate", comment: "Almost full, grab a seat early.",       time: "22 min ago", tag: "full"  },
-  { user: "Can Y.",   lib: "Study Hall B",            busy: "Full",  noise: "Loud",     comment: "No seats left, try Study Hall A.",      time: "35 min ago", tag: "loud"  },
+// ─── API HELPERS ──────────────────────────────────────────
+async function apiFetch(path, opts = {}) {
+  const headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
+  if (TOKEN) headers['Authorization'] = 'Bearer ' + TOKEN;
+  try {
+    const r = await fetch(API + path, { ...opts, headers });
+    return r;
+  } catch { return null; }
+}
+
+// ─── AUTH ─────────────────────────────────────────────────
+function updateAuthUI() {
+  const btn = document.getElementById('authBtn');
+  if (TOKEN) {
+    btn.textContent = 'Çıkış';
+    btn.onclick = logout;
+  } else {
+    btn.textContent = 'Giriş / Kayıt';
+    btn.onclick = () => document.getElementById('authModal').style.display = 'flex';
+  }
+}
+
+async function doRegister() {
+  const name  = document.getElementById('inp-name').value.trim();
+  const email = document.getElementById('inp-email').value.trim();
+  const pass  = document.getElementById('inp-pass').value;
+  const r = await apiFetch('/auth/register', { method: 'POST', body: JSON.stringify({ name, email, password: pass }) });
+  if (!r) { showToast('Sunucuya ulaşılamadı', '⚠️'); return; }
+  const data = await r.json();
+  if (r.ok) { TOKEN = data.token; localStorage.setItem('lt_token', TOKEN); closeModal(); updateAuthUI(); showToast('Kayıt başarılı!', '✅'); }
+  else showToast(data.error || 'Hata', '❌');
+}
+
+async function doLogin() {
+  const email = document.getElementById('inp-email').value.trim();
+  const pass  = document.getElementById('inp-pass').value;
+  const r = await apiFetch('/auth/login', { method: 'POST', body: JSON.stringify({ email, password: pass }) });
+  if (!r) { showToast('Sunucuya ulaşılamadı', '⚠️'); return; }
+  const data = await r.json();
+  if (r.ok) { TOKEN = data.token; localStorage.setItem('lt_token', TOKEN); closeModal(); updateAuthUI(); showToast('Giriş başarılı!', '✅'); }
+  else showToast(data.error || 'Hata', '❌');
+}
+
+async function logout() {
+  await apiFetch('/auth/logout', { method: 'POST' });
+  TOKEN = null; localStorage.removeItem('lt_token');
+  updateAuthUI(); showToast('Çıkış yapıldı');
+}
+
+function closeModal() { document.getElementById('authModal').style.display = 'none'; }
+
+// ─── MOCK FALLBACK DATA ───────────────────────────────────
+const MOCK_LIBRARIES = [
+  { id:1, name:"Ana Kütüphane",              location:"A Blok",  total_capacity:300, current_occupancy:180, occupancy_percentage:60, is_open:true },
+  { id:2, name:"Mühendislik Kütüphanesi",    location:"B Blok",  total_capacity:150, current_occupancy:90,  occupancy_percentage:60, is_open:true },
+  { id:3, name:"Sosyal Bilimler Okuma Salonu",location:"Zemin", total_capacity:80,  current_occupancy:20,  occupancy_percentage:25, is_open:true },
 ];
 
 // ─── LIBRARY GRID ─────────────────────────────────────────
-function getPct(lib) { return Math.round(lib.occupied / lib.capacity * 100); }
 function getStatus(pct) {
   if (pct < 50) return ['green',  'Available'];
   if (pct < 80) return ['yellow', 'Moderate'];
   return              ['red',    'Busy'];
 }
-function renderLibraries() {
+
+function renderLibraries(libs) {
   const grid = document.getElementById('libraryGrid');
   grid.innerHTML = '';
-  libraries.forEach((lib, i) => {
-    const pct = getPct(lib);
+  libs.forEach(lib => {
+    const pct = lib.occupancy_percentage;
     const [color, label] = getStatus(pct);
-    const free = lib.capacity - lib.occupied;
+    const free = lib.total_capacity - lib.current_occupancy;
     grid.innerHTML += `
       <div class="card">
         <div class="card-header">
           <div>
             <div class="card-title">${lib.name}</div>
-            <div class="card-sub">${lib.type}</div>
+            <div class="card-sub">${lib.location}</div>
           </div>
           <span class="status-badge status-${color}">${label}</span>
         </div>
@@ -449,44 +495,94 @@ function renderLibraries() {
           <div class="progress-bar"><div class="progress-fill fill-${color}" style="width:${pct}%"></div></div>
         </div>
         <div class="card-info">
-          <span>${lib.occupied} / ${lib.capacity} seats taken</span>
+          <span>${lib.current_occupancy} / ${lib.total_capacity} seats taken</span>
           <span><strong>${free}</strong> seats free</span>
         </div>
       </div>`;
   });
 }
 
-// ─── LIVE UPDATE SIMULATION ───────────────────────────────
-function liveUpdate() {
-  libraries.forEach(lib => {
-    const delta = Math.floor(Math.random() * 5) - 2;
-    lib.occupied = Math.max(0, Math.min(lib.capacity, lib.occupied + delta));
-  });
-  renderLibraries();
-  const totalFree = libraries.reduce((s,l) => s + l.capacity - l.occupied, 0);
-  const avgPct = Math.round(libraries.reduce((s,l) => s + getPct(l), 0) / libraries.length);
-  const avail = libraries.filter(l => getPct(l) < 80).length;
-  document.getElementById('stat-avail').textContent = avail;
-  document.getElementById('stat-pct').textContent = avgPct + '%';
-  document.getElementById('stat-seats').textContent = totalFree;
+async function loadLibraries() {
+  const r = await apiFetch('/libraries/');
+  if (r && r.ok) {
+    const data = await r.json();
+    apiLibraries = data.libraries;
+    renderLibraries(apiLibraries);
+    document.getElementById('stat-total').textContent = data.total;
+    document.getElementById('stat-avail').textContent = data.available_count;
+    document.getElementById('stat-pct').textContent   = data.avg_occupancy_pct + '%';
+    document.getElementById('stat-seats').textContent = data.total_free_seats;
+    populateLibrarySelects(apiLibraries);
+  } else {
+    apiLibraries = MOCK_LIBRARIES;
+    renderLibraries(MOCK_LIBRARIES);
+    document.getElementById('stat-total').textContent = MOCK_LIBRARIES.length;
+    populateLibrarySelects(MOCK_LIBRARIES);
+  }
 }
-setInterval(liveUpdate, 8000);
 
-// ─── FEEDBACK LIST ────────────────────────────────────────
-function renderFeedback() {
+function populateLibrarySelects(libs) {
+  ['res-library', 'fb-library'].forEach(id => {
+    const sel = document.getElementById(id);
+    if (!sel) return;
+    sel.innerHTML = libs.map(l => `<option value="${l.id}">${l.name}</option>`).join('');
+  });
+}
+
+// ─── LIVE POLL ────────────────────────────────────────────
+setInterval(loadLibraries, 30000);
+
+// ─── FEEDBACK ─────────────────────────────────────────────
+async function loadFeedback(libraryId) {
+  if (!libraryId) return;
+  const r = await apiFetch(`/feedback/${libraryId}`);
+  if (!r || !r.ok) return;
+  const data = await r.json();
   const list = document.getElementById('feedList');
-  list.innerHTML = feedbacks.map(f => `
-    <li class="feed-item">
-      <div class="feed-avatar">${f.user[0]}</div>
-      <div class="feed-body">
-        <div><span class="feed-user">${f.user}</span>
-          <span class="feed-tag tag-${f.tag}">${f.busy}</span>
+  list.innerHTML = data.feedbacks.map(f => {
+    const pct = f.reported_occupancy;
+    const tag = pct < 40 ? 'quiet' : pct < 75 ? 'loud' : 'full';
+    const label = pct < 40 ? 'Quiet' : pct < 75 ? 'Moderate' : 'Busy';
+    const ago = timeSince(f.created_at);
+    return `
+      <li class="feed-item">
+        <div class="feed-avatar">${(f.user_name||'?')[0]}</div>
+        <div class="feed-body">
+          <div><span class="feed-user">${f.user_name||'Anonim'}</span>
+            <span class="feed-tag tag-${tag}">${label} · %${pct}</span></div>
+          <div class="feed-text">"${f.comment || 'Yorum yok.'}"</div>
+          <div class="feed-time">${ago}</div>
         </div>
-        <div class="feed-library">${f.lib} · Noise: ${f.noise}</div>
-        <div class="feed-text">"${f.comment}"</div>
-        <div class="feed-time">${f.time}</div>
-      </div>
-    </li>`).join('');
+      </li>`;
+  }).join('') || '<li style="color:var(--muted);padding:1rem">Henüz geri bildirim yok.</li>';
+}
+
+function timeSince(isoStr) {
+  const diff = (Date.now() - new Date(isoStr)) / 1000;
+  if (diff < 60)   return Math.round(diff) + ' sn önce';
+  if (diff < 3600) return Math.round(diff/60) + ' dk önce';
+  return Math.round(diff/3600) + ' sa önce';
+}
+
+async function submitFeedback() {
+  if (!TOKEN) { showToast('Geri bildirim için giriş yapın', '⚠️'); return; }
+  const library_id       = parseInt(document.getElementById('fb-library').value);
+  const busyVal          = document.getElementById('fb-busy').value;
+  const reported_occupancy = busyVal.includes('Quiet') ? 20 : busyVal.includes('Moderate') ? 55 : busyVal.includes('Busy') ? 80 : 100;
+  const comment          = document.getElementById('fb-comment').value;
+
+  const r = await apiFetch('/feedback/', { method: 'POST', body: JSON.stringify({ library_id, reported_occupancy, comment }) });
+  if (!r) { showToast('Sunucuya ulaşılamadı', '⚠️'); return; }
+  const data = await r.json();
+  if (r.ok) {
+    document.getElementById('fb-comment').value = '';
+    showToast('Geri bildirim gönderildi!', '✅');
+    loadFeedback(library_id);
+    const count = parseInt(document.getElementById('feedCount').textContent) + 1;
+    document.getElementById('feedCount').textContent = count;
+  } else {
+    showToast(data.error || 'Hata', '❌');
+  }
 }
 
 // ─── SEAT MAP ─────────────────────────────────────────────
@@ -497,8 +593,8 @@ function renderSeatMap() {
   map.innerHTML = '';
   for (let i = 1; i <= 40; i++) {
     const taken = takenSeats.includes(i);
-    const sel = selectedSeat === i;
-    const cls = sel ? 'selected' : (taken ? 'taken' : 'free');
+    const sel   = selectedSeat === i;
+    const cls   = sel ? 'selected' : (taken ? 'taken' : 'free');
     const label = taken ? '✕' : (sel ? '★' : i);
     map.innerHTML += `<div class="seat ${cls}" onclick="selectSeat(${i},${taken})">${label}</div>`;
   }
@@ -510,80 +606,115 @@ function selectSeat(n, taken) {
 }
 
 // ─── RESERVATION ─────────────────────────────────────────
-function makeReservation() {
-  if (!selectedSeat) { showToast('Please select a seat first', '⚠️'); return; }
-  const lib = document.getElementById('res-library').value;
-  const time = document.getElementById('res-time').value;
-  const date = document.getElementById('res-date').value || 'Today';
-  const list = document.getElementById('resList');
-  list.innerHTML = `<li class="res-item">
-    <div><div class="res-name">${lib}</div>
-    <div class="res-meta">${date} · Seat ${selectedSeat}</div></div>
-    <div class="res-time">${time}</div>
-  </li>` + list.innerHTML;
-  takenSeats.push(selectedSeat);
-  selectedSeat = null;
-  renderSeatMap();
-  showToast('Reservation confirmed!', '✅');
+async function makeReservation() {
+  if (!selectedSeat) { showToast('Önce bir koltuk seçin', '⚠️'); return; }
+  if (!TOKEN) { showToast('Rezervasyon için giriş yapın', '⚠️'); return; }
+
+  const studyAreaId = parseInt(document.getElementById('res-library').value);
+  const date = document.getElementById('res-date').value;
+  const timeSlot = document.getElementById('res-time').value;
+  const [startH, endH] = timeSlot.split('–').map(t => t.trim().split(':')[0]);
+  const start_time = `${date}T${startH.padStart(2,'0')}:00:00`;
+  const end_time   = `${date}T${endH.padStart(2,'0')}:00:00`;
+
+  const r = await apiFetch('/reservations/', {
+    method: 'POST',
+    body: JSON.stringify({ study_area_id: studyAreaId, seat_number: selectedSeat, start_time, end_time }),
+  });
+
+  if (!r) { showToast('Sunucuya ulaşılamadı', '⚠️'); return; }
+  const data = await r.json();
+
+  if (r.ok) {
+    const list = document.getElementById('resList');
+    const res  = data.reservation;
+    list.innerHTML = `<li class="res-item">
+      <div><div class="res-name">Koltuk ${res.seat_number}</div>
+      <div class="res-meta">${date} · Alan #${res.study_area_id}</div></div>
+      <div class="res-time">${timeSlot}</div>
+    </li>` + list.innerHTML;
+    takenSeats.push(selectedSeat);
+    selectedSeat = null;
+    renderSeatMap();
+    showToast('Rezervasyon onaylandı!', '✅');
+  } else {
+    showToast(data.error || 'Rezervasyon başarısız', '❌');
+  }
 }
 
-// ─── SUBMIT FEEDBACK ─────────────────────────────────────
-function submitFeedback() {
-  const lib  = document.getElementById('fb-library').value;
-  const busy = document.getElementById('fb-busy').value.split('–')[0].trim();
-  const noise= document.getElementById('fb-noise').value;
-  const cmt  = document.getElementById('fb-comment').value || 'No additional comment.';
-  const tag  = busy.toLowerCase().includes('quiet') ? 'quiet' : busy.toLowerCase().includes('full') ? 'full' : 'loud';
-  feedbacks.unshift({ user: 'You', lib, busy, noise, comment: cmt, time: 'Just now', tag });
-  renderFeedback();
-  document.getElementById('fb-comment').value = '';
-  const count = parseInt(document.getElementById('feedCount').textContent) + 1;
-  document.getElementById('feedCount').textContent = count;
-  showToast('Feedback submitted – thank you!', '✅');
-}
+// ─── ADMIN CHARTS ─────────────────────────────────────────
+let charts = {};
+function destroyCharts() { Object.values(charts).forEach(c => c.destroy()); charts = {}; }
 
-// ─── CHARTS ──────────────────────────────────────────────
-function initCharts() {
+async function initCharts() {
+  destroyCharts();
   const accent = '#4f6ef7', green = '#22c55e', yellow = '#f59e0b', red = '#ef4444';
-  // Hourly
-  new Chart(document.getElementById('chartHourly'), {
+
+  // Peak hours — API'den
+  const peakR = await apiFetch('/stats/peak-hours?days=7');
+  let hourlyLabels = ['08','09','10','11','12','13','14','15','16','17','18','19','20'];
+  let hourlyData   = [10,22,45,60,75,68,82,79,70,65,55,40,20];
+  if (peakR && peakR.ok) {
+    const pd = await peakR.json();
+    if (pd.peak_hours && pd.peak_hours.length > 0) {
+      const first = pd.peak_hours[0];
+      hourlyLabels = first.hourly_data.map(h => String(h.hour).padStart(2,'0'));
+      hourlyData   = first.hourly_data.map(h => h.avg_occupancy_pct);
+    }
+  }
+
+  charts.hourly = new Chart(document.getElementById('chartHourly'), {
     type: 'line',
     data: {
-      labels: ['08','09','10','11','12','13','14','15','16','17','18','19','20'],
-      datasets: [{
-        label: 'Occupancy %', data: [10,22,45,60,75,68,82,79,70,65,55,40,20],
+      labels: hourlyLabels,
+      datasets: [{ label: 'Occupancy %', data: hourlyData,
         borderColor: accent, backgroundColor: 'rgba(79,110,247,.1)',
-        fill: true, tension: .4, pointRadius: 4
-      }]
+        fill: true, tension: .4, pointRadius: 4 }]
     },
     options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{y:{max:100,ticks:{callback:v=>v+'%'}}} }
   });
-  // Weekly bar
-  new Chart(document.getElementById('chartWeekly'), {
+
+  // Daily usage — API'den
+  const dailyR = await apiFetch('/stats/daily-usage?days=7');
+  let weekLabels = ['Pzt','Sal','Çar','Per','Cum','Cmt','Paz'];
+  let weekData   = apiLibraries.length ? apiLibraries.map(l => l.occupancy_percentage) : [30,90,82,20,95,34,78];
+  let weekLibNames = apiLibraries.length ? apiLibraries.map(l => l.name.substring(0,8)) : weekLabels;
+  if (dailyR && dailyR.ok) {
+    const dd = await dailyR.json();
+    if (dd.daily_usage && dd.daily_usage.length > 0) {
+      weekLibNames = dd.daily_usage.map(d => d.library_name.substring(0,10));
+      weekData     = dd.daily_usage.map(d => d.daily_data.length ? d.daily_data[d.daily_data.length-1].avg_pct : 0);
+    }
+  }
+
+  charts.weekly = new Chart(document.getElementById('chartWeekly'), {
     type: 'bar',
     data: {
-      labels: ['Main L.1','Main L.2','Eng. Lib','Hall A','Hall B','Law Lib','Science'],
-      datasets: [{ label: 'Avg %', data: [30,90,82,20,95,34,78],
-        backgroundColor: [green,red,yellow,green,red,green,yellow] }]
+      labels: weekLibNames,
+      datasets: [{ label: 'Avg %', data: weekData,
+        backgroundColor: weekData.map(v => v < 50 ? green : v < 80 ? yellow : red) }]
     },
     options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{y:{max:100}} }
   });
-  // Daily reservations
-  new Chart(document.getElementById('chartRes'), {
+
+  charts.res = new Chart(document.getElementById('chartRes'), {
     type: 'bar',
     data: {
-      labels: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+      labels: ['Pzt','Sal','Çar','Per','Cum','Cmt','Paz'],
       datasets: [{ label: 'Reservations', data: [45,67,89,72,94,38,21],
         backgroundColor: accent, borderRadius: 6 }]
     },
     options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}} }
   });
-  // Donut
-  new Chart(document.getElementById('chartDist'), {
+
+  const avail = apiLibraries.length ? apiLibraries.filter(l => l.occupancy_percentage < 50).length : 2;
+  const mod   = apiLibraries.length ? apiLibraries.filter(l => l.occupancy_percentage >= 50 && l.occupancy_percentage < 80).length : 2;
+  const busy  = apiLibraries.length ? apiLibraries.filter(l => l.occupancy_percentage >= 80).length : 3;
+  charts.dist = new Chart(document.getElementById('chartDist'), {
     type: 'doughnut',
     data: {
       labels: ['Available (<50%)','Moderate (50-80%)','Busy (>80%)'],
-      datasets: [{ data: [2,2,3], backgroundColor: [green, yellow, red], hoverOffset: 8 }]
+      datasets: [{ data: [avail, mod, busy], backgroundColor: [green, yellow, red], hoverOffset: 8 }]
     },
     options: { responsive:true, maintainAspectRatio:false }
   });
@@ -595,6 +726,10 @@ function showPage(id) {
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
   document.getElementById('page-' + id).classList.add('active');
   event.target.classList.add('active');
+  if (id === 'feedback' && apiLibraries.length) {
+    loadFeedback(apiLibraries[0].id);
+  }
+  if (id === 'admin') initCharts();
 }
 let toastTimer;
 function showToast(msg, icon='') {
@@ -602,18 +737,35 @@ function showToast(msg, icon='') {
   t.textContent = (icon ? icon + '  ' : '') + msg;
   t.className = 'toast success show';
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3500);
 }
 
 // ─── INIT ─────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
-  // set today's date as default
+document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('res-date').valueAsDate = new Date();
-  renderLibraries();
-  renderFeedback();
   renderSeatMap();
+  updateAuthUI();
+  await loadLibraries();
   initCharts();
 });
 </script>
+
+<!-- AUTH MODAL -->
+<div id="authModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:999;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:16px;padding:2rem;width:360px;box-shadow:0 8px 40px rgba(0,0,0,.2);">
+    <h3 style="color:var(--primary);margin-bottom:1.2rem">LibTracker Girişi</h3>
+    <label>Ad Soyad (kayıt için)</label>
+    <input type="text" id="inp-name" placeholder="Ali Veli">
+    <label>Üniversite E-postası</label>
+    <input type="text" id="inp-email" placeholder="ogrenci@uni.edu.tr">
+    <label>Şifre</label>
+    <input type="text" id="inp-pass" placeholder="en az 6 karakter">
+    <div style="display:flex;gap:.8rem;margin-top:1rem">
+      <button class="btn btn-primary" onclick="doLogin()" style="flex:1">Giriş</button>
+      <button class="btn btn-success" onclick="doRegister()" style="flex:1">Kayıt Ol</button>
+    </div>
+    <button onclick="closeModal()" style="width:100%;margin-top:.6rem;background:none;border:none;color:var(--muted);cursor:pointer;font-size:.85rem">Kapat</button>
+  </div>
+</div>
 </body>
 </html>

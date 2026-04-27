@@ -1,0 +1,32 @@
+name: LibTracker CI
+
+on:
+  push:
+    branches: [main, "feature/**"]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Python kurulum
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Bağımlılıkları kur
+        run: pip install -r backend/requirements.txt
+
+      - name: Testleri çalıştır
+        run: pytest tests/ -v --tb=short
+
+      - name: Test sonucu özeti
+        if: always()
+        run: pytest tests/ --tb=no -q
