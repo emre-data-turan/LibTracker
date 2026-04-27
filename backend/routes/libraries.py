@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from models import Library, StudyArea, User
+from models import Library, StudyArea, User, Reservation
 from database import db
 
 libraries_bp = Blueprint("libraries", __name__)
@@ -84,7 +84,10 @@ def create_library():
     data = request.get_json() or {}
     name = data.get("name")
     location = data.get("location", "Bilinmiyor")
-    capacity = int(data.get("total_capacity", 0))
+    try:
+        capacity = int(data.get("total_capacity", 0))
+    except (ValueError, TypeError):
+        return jsonify({"error": "total_capacity geçerli bir sayı olmalı"}), 400
 
     if not name or capacity <= 0:
         return jsonify({"error": "Geçerli isim ve kapasite giriniz"}), 400
@@ -131,19 +134,27 @@ def update_library(library_id):
     
     old_capacity = lib.total_capacity
     if "total_capacity" in data:
-        lib.total_capacity = int(data["total_capacity"])
+        try:
+            lib.total_capacity = int(data["total_capacity"])
+        except (ValueError, TypeError):
+            return jsonify({"error": "total_capacity geçerli bir sayı olmalı"}), 400
     if "current_occupancy" in data:
-        lib.current_occupancy = int(data["current_occupancy"])
+        try:
+            new_occ = int(data["current_occupancy"])
+        except (ValueError, TypeError):
+            return jsonify({"error": "current_occupancy geçerli bir sayı olmalı"}), 400
+        if new_occ > lib.total_capacity:
+            return jsonify({"error": "current_occupancy kapasitenin üzerinde olamaz"}), 400
+        lib.current_occupancy = new_occ
 
     if lib.total_capacity != old_capacity:
-        # Kapasite değiştiyse çalışma alanlarının da koltuk sayısını orantılı güncelle
         areas = StudyArea.query.filter_by(library_id=lib.id).all()
         if areas:
             new_seats_per_area = lib.total_capacity // len(areas)
             for area in areas:
+                active_count = Reservation.query.filter_by(study_area_id=area.id, status="active").count()
                 area.total_seats = new_seats_per_area
-                # Doluluk hesabı (basit tutuldu)
-                area.available_seats = new_seats_per_area
+                area.available_seats = max(0, new_seats_per_area - active_count)
 
     db.session.commit()
     return jsonify({"message": "Kütüphane güncellendi", "library": lib.to_dict()})

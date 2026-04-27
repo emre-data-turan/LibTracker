@@ -59,7 +59,7 @@ class SystemDatabase:
 
         with self._app.app_context():
             # Seed Admin User
-            admin_email = "admin"
+            admin_email = "admin@libtracker.edu"
             admin_user = User.query.filter_by(email=admin_email).first()
             if not admin_user:
                 admin_user = User(
@@ -125,7 +125,11 @@ class SystemDatabase:
             for lib in libraries:
                 for day_offset in range(7):
                     for hour in range(8, 22):
-                        recorded = now - timedelta(days=day_offset, hours=(now.hour - hour))
+                        recorded = (now - timedelta(days=day_offset)).replace(
+                            hour=hour, minute=0, second=0, microsecond=0
+                        )
+                        if recorded > now:
+                            continue
                         peak_factor = 1.0 if hour in (10, 11, 14, 15, 16) else 0.5
                         occ = int(lib.total_capacity * peak_factor * random.uniform(0.3, 0.9))
                         stat = UsageStatistics(

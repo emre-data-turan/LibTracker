@@ -1,8 +1,9 @@
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from models import Feedback, Library, User
+from models import Feedback, Library
 from database import db
 from datetime import datetime, timezone, timedelta
+from sqlalchemy.orm import joinedload
 
 feedback_bp = Blueprint("feedback", __name__)
 
@@ -116,6 +117,7 @@ def get_library_feedback(library_id):
 
     feedbacks = (
         Feedback.query
+        .options(joinedload(Feedback.user))
         .filter_by(library_id=library_id)
         .order_by(Feedback.created_at.desc())
         .limit(limit)
@@ -125,8 +127,7 @@ def get_library_feedback(library_id):
     result = []
     for fb in feedbacks:
         d = fb.to_dict()
-        user = User.query.get(fb.user_id)
-        d["user_name"] = user.name if user else "Anonim"
+        d["user_name"] = fb.user.name if fb.user else "Anonim"
         result.append(d)
 
     return jsonify({"feedbacks": result, "count": len(result)})
