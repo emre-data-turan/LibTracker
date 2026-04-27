@@ -3,218 +3,331 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LibTracker – Live Demo</title>
+<title>LibTracker – University Library System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
   :root {
-    --primary: #1a1f5e;
-    --accent: #4f6ef7;
-    --green: #22c55e;
-    --yellow: #f59e0b;
-    --red: #ef4444;
-    --bg: #f0f2ff;
-    --card: #ffffff;
-    --text: #1e293b;
-    --muted: #64748b;
+    --primary:    #1e2875;
+    --primary-lt: #2d3db5;
+    --accent:     #4361ee;
+    --accent-lt:  #6c83f5;
+    --green:      #10b981;
+    --green-lt:   #d1fae5;
+    --green-dk:   #059669;
+    --amber:      #f59e0b;
+    --amber-lt:   #fef3c7;
+    --amber-dk:   #d97706;
+    --red:        #ef4444;
+    --red-lt:     #fee2e2;
+    --red-dk:     #dc2626;
+    --bg:         #f5f6fa;
+    --surface:    #ffffff;
+    --border:     rgba(0,0,0,.07);
+    --text:       #111827;
+    --text-2:     #374151;
+    --muted:      #6b7280;
+    --muted-lt:   #9ca3af;
+    --shadow-sm:  0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+    --shadow-md:  0 4px 16px rgba(0,0,0,.08), 0 2px 6px rgba(0,0,0,.04);
+    --shadow-lg:  0 12px 40px rgba(0,0,0,.12), 0 4px 12px rgba(0,0,0,.06);
+    --radius-sm:  10px;
+    --radius:     16px;
+    --radius-lg:  20px;
+    --transition: all .22s cubic-bezier(.4,0,.2,1);
   }
-  body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); }
 
-  /* ─── NAV ─────────────────────────────────────────── */
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── NAV ───────────────────────────────────────────── */
   nav {
-    background: var(--primary);
-    padding: 0 2rem;
+    background: rgba(30,40,117,.96);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    padding: 0 2.5rem;
     display: flex; align-items: center; justify-content: space-between;
-    height: 60px; position: sticky; top: 0; z-index: 100;
-    box-shadow: 0 2px 12px rgba(0,0,0,.3);
+    height: 64px; position: sticky; top: 0; z-index: 200;
+    border-bottom: 1px solid rgba(255,255,255,.08);
+    box-shadow: 0 4px 24px rgba(0,0,0,.18);
   }
-  .nav-logo { color: #fff; font-size: 1.4rem; font-weight: 700; letter-spacing: .5px; }
-  .nav-logo span { color: #7c9eff; }
-  .nav-tabs { display: flex; gap: 4px; }
+  .nav-logo {
+    color: #fff; font-size: 1.35rem; font-weight: 800;
+    letter-spacing: -.3px; cursor: pointer; user-select: none;
+    display: flex; align-items: center; gap: 2px;
+    transition: opacity .2s;
+  }
+  .nav-logo:hover { opacity: .85; }
+  .nav-logo span { color: #7c9eff; font-weight: 300; }
+  .nav-logo-dot { width: 7px; height: 7px; background: var(--green); border-radius: 50%; margin-left: 4px; animation: glow 2s ease-in-out infinite; }
+  @keyframes glow { 0%,100%{box-shadow:0 0 0 0 rgba(16,185,129,.5)} 50%{box-shadow:0 0 0 5px rgba(16,185,129,0)} }
+
+  .nav-tabs { display: flex; gap: 2px; align-items: center; }
   .nav-tab {
-    color: #aab4d4; background: transparent; border: none;
-    padding: 8px 18px; border-radius: 6px; cursor: pointer;
-    font-size: .9rem; font-weight: 500; transition: all .2s;
+    color: rgba(255,255,255,.55); background: transparent; border: none;
+    padding: 7px 16px; border-radius: 8px; cursor: pointer;
+    font-size: .875rem; font-weight: 500; transition: var(--transition);
+    text-decoration: none; display: inline-flex; align-items: center;
+    font-family: 'Inter', sans-serif; letter-spacing: -.01em;
   }
-  .nav-tab:hover { background: rgba(255,255,255,.08); color: #fff; }
-  .nav-tab.active { background: var(--accent); color: #fff; }
+  .nav-tab:hover { background: rgba(255,255,255,.1); color: #fff; }
+  .nav-tab.active { background: rgba(255,255,255,.15); color: #fff; font-weight: 600; }
+  #authBtn {
+    margin-left: 12px; border: 1px solid rgba(255,255,255,.2) !important;
+    background: rgba(255,255,255,.06) !important;
+    color: rgba(255,255,255,.8) !important;
+    border-radius: 8px !important; padding: 7px 16px !important;
+  }
+  #authBtn:hover { background: rgba(255,255,255,.14) !important; color: #fff !important; }
   .nav-badge {
-    background: #ef4444; color: #fff; font-size: .7rem;
-    padding: 2px 7px; border-radius: 10px; margin-left: 6px;
+    background: var(--red); color: #fff; font-size: .65rem; font-weight: 700;
+    padding: 2px 6px; border-radius: 20px; margin-left: 6px; line-height: 1.4;
   }
 
-  /* ─── LAYOUT ──────────────────────────────────────── */
-  .page { display: none; padding: 2rem; max-width: 1200px; margin: 0 auto; }
-  .page.active { display: block; }
+  /* ── LAYOUT ─────────────────────────────────────────── */
+  .page { display: none; padding: 2.5rem 2rem; max-width: 1240px; margin: 0 auto; }
+  .page.active { display: block; animation: fadeUp .3s ease; }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
 
-  /* ─── HERO ────────────────────────────────────────── */
+  /* ── HERO ───────────────────────────────────────────── */
   .hero {
-    background: linear-gradient(135deg, var(--primary) 0%, #2d3ab5 100%);
-    color: #fff; border-radius: 16px; padding: 2.5rem 2rem;
-    margin-bottom: 1.5rem; text-align: center;
+    background: linear-gradient(135deg, #1e2875 0%, #3451b2 55%, #4361ee 100%);
+    color: #fff; border-radius: var(--radius-lg); padding: 3rem 2.5rem;
+    margin-bottom: 2rem; text-align: center; position: relative; overflow: hidden;
+    box-shadow: 0 8px 32px rgba(67,97,238,.3);
   }
-  .hero h1 { font-size: 2.2rem; margin-bottom: .5rem; }
-  .hero p { color: #aab4d4; font-size: 1rem; }
+  .hero::before {
+    content:''; position:absolute; inset:0;
+    background: radial-gradient(ellipse at 70% 50%, rgba(255,255,255,.08) 0%, transparent 60%);
+    pointer-events:none;
+  }
+  .hero h1 { font-size: 2.4rem; font-weight: 800; margin-bottom: .5rem; letter-spacing: -.04em; position:relative; }
+  .hero p { color: rgba(255,255,255,.7); font-size: 1.05rem; font-weight: 400; position:relative; }
   .live-badge {
-    display: inline-flex; align-items: center; gap: 6px;
-    background: rgba(34,197,94,.15); border: 1px solid #22c55e;
-    color: #22c55e; padding: 4px 12px; border-radius: 20px;
-    font-size: .8rem; font-weight: 600; margin-bottom: 1rem;
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(16,185,129,.15); border: 1px solid rgba(16,185,129,.4);
+    color: #6ee7b7; padding: 5px 14px; border-radius: 20px;
+    font-size: .8rem; font-weight: 600; margin-bottom: 1.25rem;
+    letter-spacing: .02em; position:relative;
   }
-  .live-dot { width: 8px; height: 8px; background: #22c55e; border-radius: 50%; animation: pulse 1.5s infinite; }
-  @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.3; } }
+  .live-dot {
+    width: 8px; height: 8px; background: var(--green); border-radius: 50%;
+    animation: livePulse 1.8s ease-in-out infinite;
+  }
+  @keyframes livePulse { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.4);opacity:.6} }
 
-  /* ─── CARDS GRID ──────────────────────────────────── */
-  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1.2rem; }
+  /* ── CARDS GRID ─────────────────────────────────────── */
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 1.25rem; }
   .card {
-    background: var(--card); border-radius: 14px;
-    padding: 1.4rem; box-shadow: 0 2px 12px rgba(0,0,0,.07);
-    border: 1px solid #e2e8f0; transition: transform .2s, box-shadow .2s;
+    background: var(--surface); border-radius: var(--radius);
+    padding: 1.5rem; box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border); transition: var(--transition);
+    position: relative; overflow: hidden;
   }
-  .card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,0,0,.12); }
-  .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; }
-  .card-title { font-weight: 600; font-size: 1rem; color: var(--text); }
-  .card-sub { font-size: .8rem; color: var(--muted); margin-top: 2px; }
+  .card::before {
+    content:''; position:absolute; top:0; left:0; right:0; height:3px;
+    background: linear-gradient(90deg, var(--accent), var(--accent-lt));
+    opacity:0; transition: opacity .22s;
+  }
+  .card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); border-color: rgba(67,97,238,.15); }
+  .card:hover::before { opacity:1; }
+  .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.1rem; }
+  .card-title { font-weight: 700; font-size: .95rem; color: var(--text); letter-spacing:-.01em; }
+  .card-sub { font-size: .78rem; color: var(--muted); margin-top: 3px; }
   .status-badge {
-    font-size: .75rem; font-weight: 700; padding: 3px 10px;
-    border-radius: 20px; text-transform: uppercase; letter-spacing: .5px;
+    font-size: .7rem; font-weight: 700; padding: 4px 10px;
+    border-radius: 20px; letter-spacing: .04em; text-transform: uppercase;
+    display: inline-flex; align-items: center; gap: 5px;
   }
-  .status-green  { background: #dcfce7; color: #15803d; }
-  .status-yellow { background: #fef9c3; color: #a16207; }
-  .status-red    { background: #fee2e2; color: #b91c1c; }
+  .status-green  { background: var(--green-lt);  color: var(--green-dk); }
+  .status-yellow { background: var(--amber-lt);  color: var(--amber-dk); }
+  .status-red    { background: var(--red-lt);    color: var(--red-dk); }
+  .status-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+  .status-green  .status-dot { background:var(--green);  animation:livePulse 2s infinite; }
+  .status-yellow .status-dot { background:var(--amber);  animation:livePulse 2.5s infinite; }
+  .status-red    .status-dot { background:var(--red); }
 
-  /* ─── PROGRESS BAR ────────────────────────────────── */
-  .progress-wrap { margin-bottom: .8rem; }
-  .progress-label { display: flex; justify-content: space-between; font-size: .82rem; color: var(--muted); margin-bottom: 4px; }
-  .progress-bar { height: 10px; background: #e2e8f0; border-radius: 10px; overflow: hidden; }
-  .progress-fill {
-    height: 100%; border-radius: 10px;
-    transition: width 1s ease, background .5s;
-  }
-  .fill-green  { background: var(--green); }
-  .fill-yellow { background: var(--yellow); }
-  .fill-red    { background: var(--red); }
-  .card-info { font-size: .82rem; color: var(--muted); display: flex; justify-content: space-between; }
+  /* ── PROGRESS BAR ───────────────────────────────────── */
+  .progress-wrap { margin-bottom: .9rem; }
+  .progress-label { display: flex; justify-content: space-between; font-size: .78rem; color: var(--muted); margin-bottom: 6px; font-weight:500; }
+  .progress-bar { height: 8px; background: #e5e7eb; border-radius: 20px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 20px; transition: width 1.2s cubic-bezier(.4,0,.2,1); }
+  .fill-green  { background: linear-gradient(90deg, var(--green-dk), var(--green)); }
+  .fill-yellow { background: linear-gradient(90deg, var(--amber-dk), var(--amber)); }
+  .fill-red    { background: linear-gradient(90deg, var(--red-dk),   var(--red)); }
+  .card-info { font-size: .78rem; color: var(--muted); display: flex; justify-content: space-between; }
+  .card-info strong { color: var(--text-2); font-weight: 600; }
 
-  /* ─── STAT STRIP ──────────────────────────────────── */
-  .stat-strip { display: grid; grid-template-columns: repeat(4,1fr); gap: 1rem; margin-bottom: 1.5rem; }
+  /* ── STAT STRIP ─────────────────────────────────────── */
+  .stat-strip { display: grid; grid-template-columns: repeat(4,1fr); gap: 1.1rem; margin-bottom: 2rem; }
   .stat-card {
-    background: var(--card); border-radius: 12px; padding: 1.2rem;
-    text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,.06);
-    border: 1px solid #e2e8f0;
+    background: var(--surface); border-radius: var(--radius);
+    padding: 1.4rem 1.2rem; text-align: center;
+    box-shadow: var(--shadow-sm); border: 1px solid var(--border);
+    transition: var(--transition); position:relative; overflow:hidden;
   }
-  .stat-val { font-size: 2rem; font-weight: 700; color: var(--primary); }
-  .stat-lbl { font-size: .8rem; color: var(--muted); margin-top: 2px; }
-
-  /* ─── SECTION TITLE ───────────────────────────────── */
-  .section-title { font-size: 1.1rem; font-weight: 700; color: var(--primary); margin: 1.5rem 0 .8rem; }
-
-  /* ─── RESERVATION ─────────────────────────────────── */
-  .res-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; }
-  .form-card { background: var(--card); border-radius: 14px; padding: 1.6rem; box-shadow: 0 2px 12px rgba(0,0,0,.07); border: 1px solid #e2e8f0; }
-  .form-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 1.2rem; color: var(--primary); }
-  label { display: block; font-size: .85rem; color: var(--muted); margin-bottom: 4px; margin-top: 12px; font-weight: 500; }
-  select, input[type=text], input[type=date], input[type=time], textarea {
-    width: 100%; padding: 9px 12px; border: 1px solid #cbd5e1;
-    border-radius: 8px; font-size: .9rem; color: var(--text);
-    background: #f8fafc; transition: border .2s;
+  .stat-card::after {
+    content:''; position:absolute; bottom:0; left:0; right:0; height:3px;
+    background: linear-gradient(90deg,var(--accent),var(--accent-lt)); opacity:.5;
   }
-  select:focus, input:focus, textarea:focus { outline: none; border-color: var(--accent); background: #fff; }
+  .stat-card:hover { transform:translateY(-3px); box-shadow:var(--shadow-md); }
+  .stat-icon { font-size:1.5rem; margin-bottom:.4rem; }
+  .stat-val { font-size: 2.1rem; font-weight: 800; color: var(--primary); letter-spacing:-.04em; }
+  .stat-lbl { font-size: .75rem; color: var(--muted); margin-top: 3px; font-weight: 500; letter-spacing:.02em; text-transform:uppercase; }
+
+  /* ── SECTION TITLE ──────────────────────────────────── */
+  .section-title {
+    font-size: 1rem; font-weight: 700; color: var(--text-2);
+    margin: 2rem 0 1rem; letter-spacing: -.01em;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .section-title::after {
+    content:''; flex:1; height:1px; background:var(--border);
+  }
+
+  /* ── FORM / RESERVATION ─────────────────────────────── */
+  .res-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+  .form-card {
+    background: var(--surface); border-radius: var(--radius);
+    padding: 1.75rem; box-shadow: var(--shadow-sm); border: 1px solid var(--border);
+  }
+  .form-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 1.4rem; color: var(--text); letter-spacing:-.02em; }
+  label {
+    display: block; font-size: .78rem; color: var(--muted); font-weight: 600;
+    margin-bottom: 5px; margin-top: 14px; letter-spacing: .03em; text-transform: uppercase;
+  }
+  select, input[type=text], input[type=date], input[type=time], input[type=password], textarea {
+    width: 100%; padding: 10px 13px; border: 1.5px solid #e5e7eb;
+    border-radius: var(--radius-sm); font-size: .9rem; color: var(--text);
+    background: #fafafa; transition: var(--transition); font-family: 'Inter', sans-serif;
+  }
+  select:focus, input:focus, textarea:focus {
+    outline: none; border-color: var(--accent); background: #fff;
+    box-shadow: 0 0 0 3px rgba(67,97,238,.1);
+  }
   .btn {
-    display: inline-block; padding: 10px 22px; border-radius: 8px;
-    font-size: .9rem; font-weight: 600; cursor: pointer; border: none;
-    transition: all .2s; margin-top: 14px;
+    display: inline-flex; align-items: center; justify-content: center;
+    padding: 11px 24px; border-radius: var(--radius-sm);
+    font-size: .88rem; font-weight: 600; cursor: pointer; border: none;
+    transition: var(--transition); margin-top: 16px; letter-spacing: -.01em;
+    font-family: 'Inter', sans-serif;
   }
-  .btn-primary { background: var(--accent); color: #fff; }
-  .btn-primary:hover { background: #3a56e8; transform: translateY(-1px); }
-  .btn-success { background: var(--green); color: #fff; }
-  .btn-success:hover { background: #16a34a; transform: translateY(-1px); }
+  .btn:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+  .btn:active { transform: translateY(0); }
+  .btn-primary { background: linear-gradient(135deg,var(--accent),var(--accent-lt)); color: #fff; box-shadow: 0 2px 12px rgba(67,97,238,.3); }
+  .btn-primary:hover { box-shadow: 0 6px 20px rgba(67,97,238,.4); }
+  .btn-success { background: linear-gradient(135deg,var(--green-dk),var(--green)); color: #fff; box-shadow: 0 2px 12px rgba(16,185,129,.25); }
+  .btn-success:hover { box-shadow: 0 6px 20px rgba(16,185,129,.35); }
 
-  /* ─── RESERVATION LIST ────────────────────────────── */
+  /* ── RESERVATION LIST ───────────────────────────────── */
   .res-list { list-style: none; }
   .res-item {
     display: flex; justify-content: space-between; align-items: center;
-    padding: 10px 0; border-bottom: 1px solid #f1f5f9;
+    padding: 11px 0; border-bottom: 1px solid #f3f4f6;
   }
   .res-item:last-child { border-bottom: none; }
-  .res-name { font-weight: 600; font-size: .9rem; }
-  .res-meta { font-size: .8rem; color: var(--muted); }
-  .res-time { font-size: .8rem; font-weight: 600; color: var(--accent); }
+  .res-name { font-weight: 600; font-size: .88rem; color:var(--text); }
+  .res-meta { font-size: .76rem; color: var(--muted); margin-top:2px; }
+  .res-time {
+    font-size: .78rem; font-weight: 700; color: var(--accent);
+    background: rgba(67,97,238,.08); padding: 3px 10px; border-radius:20px;
+  }
 
-  /* ─── FEEDBACK ────────────────────────────────────── */
+  /* ── FEEDBACK ───────────────────────────────────────── */
   .feed-list { list-style: none; margin-top: .5rem; }
   .feed-item {
-    background: var(--card); border-radius: 10px; padding: 1rem;
-    margin-bottom: .8rem; border: 1px solid #e2e8f0;
+    background: var(--surface); border-radius: var(--radius-sm); padding: 1.1rem;
+    margin-bottom: .9rem; border: 1px solid var(--border);
     display: flex; gap: 1rem; align-items: flex-start;
+    transition: var(--transition); box-shadow: var(--shadow-sm);
   }
+  .feed-item:hover { box-shadow: var(--shadow-md); border-color: rgba(67,97,238,.15); }
   .feed-avatar {
-    width: 38px; height: 38px; border-radius: 50%;
-    background: var(--accent); color: #fff;
+    width: 40px; height: 40px; border-radius: 50%;
+    background: linear-gradient(135deg,var(--accent),var(--accent-lt)); color: #fff;
     display: flex; align-items: center; justify-content: center;
     font-weight: 700; font-size: .9rem; flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(67,97,238,.3);
   }
   .feed-body { flex: 1; }
-  .feed-user { font-weight: 700; font-size: .88rem; }
-  .feed-library { font-size: .78rem; color: var(--muted); }
-  .feed-text { font-size: .87rem; margin-top: 4px; color: var(--text); }
-  .feed-time { font-size: .75rem; color: var(--muted); margin-top: 4px; }
-  .feed-tag { font-size: .75rem; padding: 2px 8px; border-radius: 10px; margin-left: 6px; }
-  .tag-quiet { background: #dbeafe; color: #1d4ed8; }
-  .tag-loud  { background: #fee2e2; color: #b91c1c; }
-  .tag-full  { background: #fef9c3; color: #854d0e; }
+  .feed-user { font-weight: 700; font-size: .88rem; color:var(--text); }
+  .feed-text { font-size: .85rem; margin-top: 5px; color: var(--text-2); font-style:italic; }
+  .feed-time { font-size: .73rem; color: var(--muted-lt); margin-top: 5px; }
+  .feed-tag { font-size: .7rem; font-weight:600; padding: 3px 9px; border-radius: 20px; margin-left: 7px; }
+  .tag-quiet { background: rgba(67,97,238,.1); color: var(--accent); }
+  .tag-loud  { background: var(--amber-lt); color: var(--amber-dk); }
+  .tag-full  { background: var(--red-lt); color: var(--red-dk); }
 
-  /* ─── ADMIN CHARTS ────────────────────────────────── */
-  .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; }
-  .chart-card {
-    background: var(--card); border-radius: 14px; padding: 1.4rem;
-    box-shadow: 0 2px 12px rgba(0,0,0,.07); border: 1px solid #e2e8f0;
-  }
-  .chart-card h3 { font-size: .95rem; font-weight: 700; color: var(--primary); margin-bottom: 1rem; }
-  .chart-wrap { position: relative; height: 200px; }
-
-  /* ─── TOAST ───────────────────────────────────────── */
+  /* ── TOAST ──────────────────────────────────────────── */
   .toast {
     position: fixed; bottom: 2rem; right: 2rem;
-    background: #1e293b; color: #fff; padding: 12px 20px;
-    border-radius: 10px; font-size: .88rem; font-weight: 500;
-    box-shadow: 0 4px 20px rgba(0,0,0,.3); z-index: 9999;
-    transform: translateY(100px); opacity: 0;
-    transition: all .3s ease;
+    background: rgba(17,24,39,.95); backdrop-filter:blur(12px);
+    color: #fff; padding: 13px 20px; border-radius: var(--radius-sm);
+    font-size: .875rem; font-weight: 500; font-family:'Inter',sans-serif;
+    box-shadow: 0 8px 32px rgba(0,0,0,.25); z-index: 9999;
+    transform: translateY(20px) scale(.95); opacity: 0;
+    transition: all .28s cubic-bezier(.4,0,.2,1);
+    max-width: 320px; border-left: 3px solid transparent;
   }
-  .toast.show { transform: translateY(0); opacity: 1; }
-  .toast.success { border-left: 4px solid var(--green); }
+  .toast.show { transform: translateY(0) scale(1); opacity: 1; }
+  .toast.success { border-left-color: var(--green); }
 
-  /* ─── SEAT MAP ────────────────────────────────────── */
-  .seat-map { display: grid; grid-template-columns: repeat(8,1fr); gap: 6px; padding: 1rem; background: #f8fafc; border-radius: 10px; margin-top: .8rem; }
-  .seat {
-    aspect-ratio: 1; border-radius: 5px; cursor: pointer;
-    transition: all .2s; font-size: .65rem; display: flex;
-    align-items: center; justify-content: center; font-weight: 700;
+  /* ── SEAT MAP ───────────────────────────────────────── */
+  .seat-map {
+    display: grid; grid-template-columns: repeat(8,1fr); gap: 5px;
+    padding: 1.1rem; background: #f9fafb; border-radius: var(--radius-sm);
+    margin-top: 1rem; border: 1px solid #e5e7eb;
   }
-  .seat.taken   { background: #fecaca; color: #b91c1c; }
-  .seat.free    { background: #bbf7d0; color: #15803d; cursor: pointer; }
-  .seat.selected { background: var(--accent); color: #fff; }
-  .seat-legend { display: flex; gap: 1rem; font-size: .78rem; color: var(--muted); margin-top: 6px; }
-  .legend-dot { width:12px; height:12px; border-radius:3px; display:inline-block; margin-right:4px; }
+  .seat {
+    aspect-ratio: 1; border-radius: 7px; cursor: pointer;
+    transition: all .18s cubic-bezier(.4,0,.2,1);
+    font-size: .62rem; display: flex; align-items: center; justify-content: center;
+    font-weight: 700;
+  }
+  .seat.taken   { background: #fde8e8; color: var(--red-dk); cursor: not-allowed; }
+  .seat.free    { background: #d1fae5; color: var(--green-dk); }
+  .seat.free:hover { background: var(--green); color:#fff; transform:scale(1.15); box-shadow:0 2px 8px rgba(16,185,129,.4); }
+  .seat.selected { background: var(--accent); color: #fff; transform:scale(1.1); box-shadow:0 2px 10px rgba(67,97,238,.5); }
+  .seat-legend { display: flex; gap: 1.2rem; font-size: .75rem; color: var(--muted); margin-top: 8px; font-weight:500; }
+  .legend-dot { width:10px; height:10px; border-radius:3px; display:inline-block; margin-right:5px; vertical-align:middle; }
+
+  /* ── SCROLLBAR ──────────────────────────────────────── */
+  ::-webkit-scrollbar { width:6px; }
+  ::-webkit-scrollbar-track { background:#f1f1f1; }
+  ::-webkit-scrollbar-thumb { background:#c7cdd6; border-radius:10px; }
+  ::-webkit-scrollbar-thumb:hover { background:#a0a8b5; }
 
   @media (max-width: 768px) {
     .stat-strip { grid-template-columns: repeat(2,1fr); }
-    .res-grid, .chart-grid { grid-template-columns: 1fr; }
+    .res-grid { grid-template-columns: 1fr; }
+    nav { padding: 0 1rem; }
+    .page { padding: 1.5rem 1rem; }
   }
 </style>
 </head>
+
+
 <body>
 
 <!-- NAV -->
 <nav>
-  <div class="nav-logo">Lib<span>Tracker</span></div>
+  <div class="nav-logo" onclick="navigateDashboard()">Lib<span>Tracker</span><span class="nav-logo-dot"></span></div>
   <div class="nav-tabs">
-    <button class="nav-tab active" onclick="showPage('dashboard')">Dashboard</button>
-    <button class="nav-tab" onclick="showPage('reserve')">Reserve a Seat</button>
-    <button class="nav-tab" onclick="showPage('feedback')">Feedback <span class="nav-badge" id="feedCount">3</span></button>
-    <button class="nav-tab" onclick="showPage('admin')">Admin View</button>
-    <button class="nav-tab" id="authBtn" style="margin-left:12px;border:1px solid rgba(255,255,255,.3)">Giriş / Kayıt</button>
+    <button class="nav-tab active" data-page="dashboard" onclick="showPage('dashboard')">Dashboard</button>
+    <button class="nav-tab" data-page="reserve" onclick="showPage('reserve')">Reserve a Seat</button>
+    <button class="nav-tab" data-page="feedback" onclick="showPage('feedback')">Feedback <span class="nav-badge" id="feedCount">3</span></button>
+    <a href="admin.html" target="_blank" class="nav-tab" style="text-decoration:none;opacity:.7">Admin ↗</a>
+    <button class="nav-tab" id="authBtn">Login / Register</button>
   </div>
 </nav>
 
@@ -228,18 +341,22 @@
 
   <div class="stat-strip">
     <div class="stat-card">
+      <div class="stat-icon">🏛️</div>
       <div class="stat-val" id="stat-total">7</div>
       <div class="stat-lbl">Locations Tracked</div>
     </div>
     <div class="stat-card">
+      <div class="stat-icon">✅</div>
       <div class="stat-val" id="stat-avail">4</div>
       <div class="stat-lbl">Available Now</div>
     </div>
     <div class="stat-card">
+      <div class="stat-icon">📊</div>
       <div class="stat-val" id="stat-pct">58%</div>
       <div class="stat-lbl">Avg Occupancy</div>
     </div>
     <div class="stat-card">
+      <div class="stat-icon">💺</div>
       <div class="stat-val" id="stat-seats">142</div>
       <div class="stat-lbl">Free Seats</div>
     </div>
@@ -358,48 +475,7 @@
   </div>
 </div>
 
-<!-- ─────────────────── PAGE 4: ADMIN ─────────────────── -->
-<div class="page" id="page-admin">
-  <div class="section-title" style="margin-top:0">Admin Statistics Dashboard</div>
 
-  <div class="stat-strip" style="margin-bottom:1.5rem">
-    <div class="stat-card">
-      <div class="stat-val">1,284</div>
-      <div class="stat-lbl">Visits Today</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-val">87</div>
-      <div class="stat-lbl">Active Reservations</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-val">14:00</div>
-      <div class="stat-lbl">Today's Peak Hour</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-val">94%</div>
-      <div class="stat-lbl">Feedback Accuracy</div>
-    </div>
-  </div>
-
-  <div class="chart-grid">
-    <div class="chart-card">
-      <h3>Hourly Occupancy – Main Library</h3>
-      <div class="chart-wrap"><canvas id="chartHourly"></canvas></div>
-    </div>
-    <div class="chart-card">
-      <h3>Weekly Avg Occupancy by Location</h3>
-      <div class="chart-wrap"><canvas id="chartWeekly"></canvas></div>
-    </div>
-    <div class="chart-card">
-      <h3>Daily Reservations This Week</h3>
-      <div class="chart-wrap"><canvas id="chartRes"></canvas></div>
-    </div>
-    <div class="chart-card">
-      <h3>Occupancy Distribution (Today)</h3>
-      <div class="chart-wrap"><canvas id="chartDist"></canvas></div>
-    </div>
-  </div>
-</div>
 
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
@@ -423,10 +499,10 @@ async function apiFetch(path, opts = {}) {
 function updateAuthUI() {
   const btn = document.getElementById('authBtn');
   if (TOKEN) {
-    btn.textContent = 'Çıkış';
+    btn.textContent = 'Logout';
     btn.onclick = logout;
   } else {
-    btn.textContent = 'Giriş / Kayıt';
+    btn.textContent = 'Login / Register';
     btn.onclick = () => document.getElementById('authModal').style.display = 'flex';
   }
 }
@@ -436,26 +512,26 @@ async function doRegister() {
   const email = document.getElementById('inp-email').value.trim();
   const pass  = document.getElementById('inp-pass').value;
   const r = await apiFetch('/auth/register', { method: 'POST', body: JSON.stringify({ name, email, password: pass }) });
-  if (!r) { showToast('Sunucuya ulaşılamadı', '⚠️'); return; }
+  if (!r) { showToast('Unable to reach server', '⚠️'); return; }
   const data = await r.json();
-  if (r.ok) { TOKEN = data.token; localStorage.setItem('lt_token', TOKEN); closeModal(); updateAuthUI(); showToast('Kayıt başarılı!', '✅'); }
-  else showToast(data.error || 'Hata', '❌');
+  if (r.ok) { TOKEN = data.token; localStorage.setItem('lt_token', TOKEN); closeModal(); updateAuthUI(); showToast('Registration successful!', '✅'); }
+  else showToast(data.error || 'Error', '❌');
 }
 
 async function doLogin() {
   const email = document.getElementById('inp-email').value.trim();
   const pass  = document.getElementById('inp-pass').value;
   const r = await apiFetch('/auth/login', { method: 'POST', body: JSON.stringify({ email, password: pass }) });
-  if (!r) { showToast('Sunucuya ulaşılamadı', '⚠️'); return; }
+  if (!r) { showToast('Unable to reach server', '⚠️'); return; }
   const data = await r.json();
-  if (r.ok) { TOKEN = data.token; localStorage.setItem('lt_token', TOKEN); closeModal(); updateAuthUI(); showToast('Giriş başarılı!', '✅'); }
-  else showToast(data.error || 'Hata', '❌');
+  if (r.ok) { TOKEN = data.token; localStorage.setItem('lt_token', TOKEN); closeModal(); updateAuthUI(); showToast('Login successful!', '✅'); }
+  else showToast(data.error || 'Error', '❌');
 }
 
 async function logout() {
   await apiFetch('/auth/logout', { method: 'POST' });
   TOKEN = null; localStorage.removeItem('lt_token');
-  updateAuthUI(); showToast('Çıkış yapıldı');
+  updateAuthUI(); showToast('Logged out');
 }
 
 function closeModal() { document.getElementById('authModal').style.display = 'none'; }
@@ -548,49 +624,64 @@ async function loadFeedback(libraryId) {
       <li class="feed-item">
         <div class="feed-avatar">${(f.user_name||'?')[0]}</div>
         <div class="feed-body">
-          <div><span class="feed-user">${f.user_name||'Anonim'}</span>
-            <span class="feed-tag tag-${tag}">${label} · %${pct}</span></div>
-          <div class="feed-text">"${f.comment || 'Yorum yok.'}"</div>
+          <div><span class="feed-user">${f.user_name||'Anonymous'}</span>
+            <span class="feed-tag tag-${tag}">${label} &middot; ${pct}%</span></div>
+          ${f.comment ? `<div class="feed-text">"${f.comment}"</div>` : ''}
           <div class="feed-time">${ago}</div>
         </div>
       </li>`;
-  }).join('') || '<li style="color:var(--muted);padding:1rem">Henüz geri bildirim yok.</li>';
+  }).join('') || '<li style="color:var(--muted);padding:1rem">No feedback yet.</li>';
 }
 
 function timeSince(isoStr) {
   const diff = (Date.now() - new Date(isoStr)) / 1000;
-  if (diff < 60)   return Math.round(diff) + ' sn önce';
-  if (diff < 3600) return Math.round(diff/60) + ' dk önce';
-  return Math.round(diff/3600) + ' sa önce';
+  if (diff < 60)   return Math.round(diff) + 's ago';
+  if (diff < 3600) return Math.round(diff/60) + 'm ago';
+  return Math.round(diff/3600) + 'h ago';
 }
 
 async function submitFeedback() {
-  if (!TOKEN) { showToast('Geri bildirim için giriş yapın', '⚠️'); return; }
+  if (!TOKEN) { showToast('Please log in to submit feedback', '⚠️'); return; }
   const library_id       = parseInt(document.getElementById('fb-library').value);
   const busyVal          = document.getElementById('fb-busy').value;
   const reported_occupancy = busyVal.includes('Quiet') ? 20 : busyVal.includes('Moderate') ? 55 : busyVal.includes('Busy') ? 80 : 100;
-  const comment          = document.getElementById('fb-comment').value;
+  const comment          = document.getElementById('fb-comment').value.trim() || null;
 
   const r = await apiFetch('/feedback/', { method: 'POST', body: JSON.stringify({ library_id, reported_occupancy, comment }) });
-  if (!r) { showToast('Sunucuya ulaşılamadı', '⚠️'); return; }
+  if (!r) { showToast('Unable to reach server', '⚠️'); return; }
   const data = await r.json();
   if (r.ok) {
     document.getElementById('fb-comment').value = '';
-    showToast('Geri bildirim gönderildi!', '✅');
+    showToast('Feedback submitted!', '✅');
     loadFeedback(library_id);
     const count = parseInt(document.getElementById('feedCount').textContent) + 1;
     document.getElementById('feedCount').textContent = count;
   } else {
-    showToast(data.error || 'Hata', '❌');
+    showToast(data.error || 'Error', '❌');
   }
 }
 
 // ─── SEAT MAP ─────────────────────────────────────────────
 let selectedSeat = null;
-const takenSeats = [1,3,7,8,12,15,18,20,22,25,28,30,31,33];
+const SEAT_PATTERNS = {
+  '09:00 – 11:00': [3, 7, 12, 25, 36],
+  '11:00 – 13:00': [1, 5, 8, 15, 22, 30, 38],
+  '13:00 – 15:00': [2, 4, 9, 13, 18, 21, 28, 35, 39],
+  '15:00 – 17:00': [1, 3, 6, 10, 14, 19, 24, 31, 37, 40],
+  '17:00 – 19:00': [2, 7, 11, 16, 20, 26, 32, 38],
+  '19:00 – 21:00': [4, 9, 17, 23, 29, 34],
+};
+function getTakenSeats() {
+  const timeSlot = (document.getElementById('res-time') || {}).value || '';
+  const libId = parseInt((document.getElementById('res-library') || {}).value) || 1;
+  const base = SEAT_PATTERNS[timeSlot] || [3, 7, 12, 25];
+  const shift = (libId - 1) * 3;
+  return base.map(s => ((s + shift - 1) % 40) + 1);
+}
 function renderSeatMap() {
   const map = document.getElementById('seatMap');
   map.innerHTML = '';
+  const takenSeats = getTakenSeats();
   for (let i = 1; i <= 40; i++) {
     const taken = takenSeats.includes(i);
     const sel   = selectedSeat === i;
@@ -607,38 +698,40 @@ function selectSeat(n, taken) {
 
 // ─── RESERVATION ─────────────────────────────────────────
 async function makeReservation() {
-  if (!selectedSeat) { showToast('Önce bir koltuk seçin', '⚠️'); return; }
-  if (!TOKEN) { showToast('Rezervasyon için giriş yapın', '⚠️'); return; }
+  if (!selectedSeat) { showToast('Please select a seat first', '⚠️'); return; }
+  if (!TOKEN)        { showToast('Please log in to make a reservation', '⚠️'); return; }
 
   const studyAreaId = parseInt(document.getElementById('res-library').value);
-  const date = document.getElementById('res-date').value;
-  const timeSlot = document.getElementById('res-time').value;
-  const [startH, endH] = timeSlot.split('–').map(t => t.trim().split(':')[0]);
-  const start_time = `${date}T${startH.padStart(2,'0')}:00:00`;
-  const end_time   = `${date}T${endH.padStart(2,'0')}:00:00`;
+  const date        = document.getElementById('res-date').value;
+  if (!date) { showToast('Please select a date', '⚠️'); return; }
+  const timeSlot    = document.getElementById('res-time').value;
+  const parts       = timeSlot.split(/\s*[–-]\s*/);
+  const startH      = parts[0].trim().split(':')[0].padStart(2, '0');
+  const endH        = parts[1] ? parts[1].trim().split(':')[0].padStart(2, '0') : String(parseInt(startH) + 2).padStart(2, '0');
+  const start_time  = `${date}T${startH}:00:00`;
+  const end_time    = `${date}T${endH}:00:00`;
 
   const r = await apiFetch('/reservations/', {
     method: 'POST',
     body: JSON.stringify({ study_area_id: studyAreaId, seat_number: selectedSeat, start_time, end_time }),
   });
 
-  if (!r) { showToast('Sunucuya ulaşılamadı', '⚠️'); return; }
+  if (!r) { showToast('Unable to reach server', '⚠️'); return; }
   const data = await r.json();
 
   if (r.ok) {
     const list = document.getElementById('resList');
     const res  = data.reservation;
     list.innerHTML = `<li class="res-item">
-      <div><div class="res-name">Koltuk ${res.seat_number}</div>
-      <div class="res-meta">${date} · Alan #${res.study_area_id}</div></div>
+      <div><div class="res-name">Seat ${res.seat_number}</div>
+      <div class="res-meta">${date} · Area #${res.study_area_id}</div></div>
       <div class="res-time">${timeSlot}</div>
     </li>` + list.innerHTML;
-    takenSeats.push(selectedSeat);
     selectedSeat = null;
     renderSeatMap();
-    showToast('Rezervasyon onaylandı!', '✅');
+    showToast('Reservation confirmed!', '✅');
   } else {
-    showToast(data.error || 'Rezervasyon başarısız', '❌');
+    showToast(data.error || 'Reservation failed', '❌');
   }
 }
 
@@ -721,16 +814,27 @@ async function initCharts() {
 }
 
 // ─── NAV / TOAST ─────────────────────────────────────────
-function showPage(id) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-  document.getElementById('page-' + id).classList.add('active');
-  event.target.classList.add('active');
-  if (id === 'feedback' && apiLibraries.length) {
-    loadFeedback(apiLibraries[0].id);
+function navigateDashboard() { showPage('dashboard', null); }
+
+function showPage(id, tabEl) {
+  if (id === 'reserve' && !TOKEN) {
+    showToast('Please log in to make a reservation', '🔒');
+    document.getElementById('authModal').style.display = 'flex';
+    return;
   }
-  if (id === 'admin') initCharts();
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab[data-page]').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  const tab = tabEl || document.querySelector(`.nav-tab[data-page="${id}"]`);
+  if (tab) tab.classList.add('active');
+  if (id === 'feedback' && apiLibraries.length) loadFeedback(apiLibraries[0].id);
 }
+
+// Update nav-tab onclick to pass element reference
+document.querySelectorAll('.nav-tab[data-page]').forEach(btn => {
+  btn.addEventListener('click', function() { showPage(this.dataset.page, this); });
+});
+
 let toastTimer;
 function showToast(msg, icon='') {
   const t = document.getElementById('toast');
@@ -742,29 +846,82 @@ function showToast(msg, icon='') {
 
 // ─── INIT ─────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
-  document.getElementById('res-date').valueAsDate = new Date();
+  // Set today's date and cap at +5 days
+  const today = new Date();
+  const maxDay = new Date(today);
+  maxDay.setDate(maxDay.getDate() + 5);
+  const dateInput = document.getElementById('res-date');
+  dateInput.valueAsDate = today;
+  dateInput.min = today.toISOString().split('T')[0];
+  dateInput.max = maxDay.toISOString().split('T')[0];
+
+  // Re-render seat map when library or time changes
+  document.getElementById('res-library').addEventListener('change', () => { selectedSeat = null; renderSeatMap(); });
+  document.getElementById('res-time').addEventListener('change',    () => { selectedSeat = null; renderSeatMap(); });
+
   renderSeatMap();
   updateAuthUI();
   await loadLibraries();
-  initCharts();
 });
+
+// ─── MODAL TAB SWITCH ─────────────────────────────────
+function switchModalTab(tab) {
+  const isLogin = tab === 'login';
+  document.getElementById('modal-name-row').style.display = isLogin ? 'none' : 'block';
+  const submitBtn = document.getElementById('modal-submit-btn');
+  submitBtn.textContent = isLogin ? 'Login' : 'Create Account';
+  submitBtn.onclick = isLogin ? doLogin : doRegister;
+  const loginTab = document.getElementById('modal-tab-login');
+  const regTab   = document.getElementById('modal-tab-register');
+  loginTab.style.background     = isLogin ? '#fff'        : 'transparent';
+  loginTab.style.color          = isLogin ? 'var(--primary)' : 'var(--muted)';
+  loginTab.style.boxShadow      = isLogin ? '0 1px 4px rgba(0,0,0,.1)' : 'none';
+  regTab.style.background       = isLogin ? 'transparent' : '#fff';
+  regTab.style.color            = isLogin ? 'var(--muted)' : 'var(--primary)';
+  regTab.style.boxShadow        = isLogin ? 'none' : '0 1px 4px rgba(0,0,0,.1)';
+}
 </script>
 
 <!-- AUTH MODAL -->
-<div id="authModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:999;align-items:center;justify-content:center;">
-  <div style="background:#fff;border-radius:16px;padding:2rem;width:360px;box-shadow:0 8px 40px rgba(0,0,0,.2);">
-    <h3 style="color:var(--primary);margin-bottom:1.2rem">LibTracker Girişi</h3>
-    <label>Ad Soyad (kayıt için)</label>
-    <input type="text" id="inp-name" placeholder="Ali Veli">
-    <label>Üniversite E-postası</label>
-    <input type="text" id="inp-email" placeholder="ogrenci@uni.edu.tr">
-    <label>Şifre</label>
-    <input type="text" id="inp-pass" placeholder="en az 6 karakter">
-    <div style="display:flex;gap:.8rem;margin-top:1rem">
-      <button class="btn btn-primary" onclick="doLogin()" style="flex:1">Giriş</button>
-      <button class="btn btn-success" onclick="doRegister()" style="flex:1">Kayıt Ol</button>
+<div id="authModal" style="display:none;position:fixed;inset:0;background:rgba(17,24,39,.6);backdrop-filter:blur(8px);z-index:9998;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:24px;width:400px;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.22);animation:fadeUp .25s ease;">
+    <!-- Modal Header -->
+    <div style="background:linear-gradient(135deg,#1e2875,#4361ee);padding:2rem 2rem 1.5rem;text-align:center;">
+      <div style="font-size:2rem;margin-bottom:.4rem;">📚</div>
+      <h3 style="color:#fff;font-size:1.2rem;font-weight:800;letter-spacing:-.02em;margin:0">Welcome to LibTracker</h3>
+      <p style="color:rgba(255,255,255,.6);font-size:.82rem;margin-top:.3rem;">University Library Management System</p>
     </div>
-    <button onclick="closeModal()" style="width:100%;margin-top:.6rem;background:none;border:none;color:var(--muted);cursor:pointer;font-size:.85rem">Kapat</button>
+    <!-- Modal Body -->
+    <div style="padding:1.75rem 2rem 2rem;">
+      <div style="display:flex;background:#f5f6fa;border-radius:10px;padding:3px;margin-bottom:1.5rem;">
+        <button id="modal-tab-login" onclick="switchModalTab('login')"
+          style="flex:1;padding:8px;border:none;border-radius:8px;font-weight:600;font-size:.85rem;cursor:pointer;font-family:'Inter',sans-serif;background:white;color:var(--primary);box-shadow:0 1px 4px rgba(0,0,0,.1);transition:all .2s;">
+          Login
+        </button>
+        <button id="modal-tab-register" onclick="switchModalTab('register')"
+          style="flex:1;padding:8px;border:none;border-radius:8px;font-weight:600;font-size:.85rem;cursor:pointer;font-family:'Inter',sans-serif;background:transparent;color:var(--muted);transition:all .2s;">
+          Register
+        </button>
+      </div>
+
+      <div id="modal-name-row" style="display:none;">
+        <label>Full Name</label>
+        <input type="text" id="inp-name" placeholder="Jane Doe">
+      </div>
+      <label>University E-mail</label>
+      <input type="text" id="inp-email" placeholder="student@university.edu">
+      <label>Password</label>
+      <input type="password" id="inp-pass" placeholder="at least 6 characters">
+
+      <button id="modal-submit-btn" class="btn btn-primary" onclick="doLogin()"
+        style="width:100%;margin-top:1.25rem;padding:12px;font-size:.95rem;border-radius:12px;">
+        Login
+      </button>
+      <button onclick="closeModal()"
+        style="width:100%;margin-top:.6rem;background:none;border:none;color:var(--muted);cursor:pointer;font-size:.82rem;font-family:'Inter',sans-serif;padding:6px;">
+        Cancel
+      </button>
+    </div>
   </div>
 </div>
 </body>

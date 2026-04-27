@@ -80,7 +80,7 @@ def create_reservation():
     if end <= start:
         return jsonify({"error": "end_time, start_time'dan sonra olmalı"}), 400
 
-    if start < datetime.now(start.tzinfo or timezone.utc):
+    if start < datetime.now():
         return jsonify({"error": "Geçmiş bir zaman için rezervasyon yapılamaz"}), 400
 
     area = StudyArea.query.get_or_404(study_area_id, description="Çalışma alanı bulunamadı")
