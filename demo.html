@@ -7,15 +7,16 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
   *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
   :root {
-    --primary:    #1e2875;
-    --primary-lt: #2d3db5;
-    --accent:     #4361ee;
-    --accent-lt:  #6c83f5;
+    --primary:    #4a3b32;
+    --primary-lt: #6e5c4f;
+    --accent:     #b8860b;
+    --accent-lt:  #d4af37;
     --green:      #10b981;
     --green-lt:   #d1fae5;
     --green-dk:   #059669;
@@ -25,13 +26,13 @@
     --red:        #ef4444;
     --red-lt:     #fee2e2;
     --red-dk:     #dc2626;
-    --bg:         #f5f6fa;
-    --surface:    #ffffff;
-    --border:     rgba(0,0,0,.07);
-    --text:       #111827;
-    --text-2:     #374151;
-    --muted:      #6b7280;
-    --muted-lt:   #9ca3af;
+    --bg:         #fbf8f1;
+    --surface:    rgba(255, 255, 255, 0.95);
+    --border:     rgba(74, 59, 50, 0.12);
+    --text:       #2c241b;
+    --text-2:     #4a3b32;
+    --muted:      #786c60;
+    --muted-lt:   #a39b93;
     --shadow-sm:  0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
     --shadow-md:  0 4px 16px rgba(0,0,0,.08), 0 2px 6px rgba(0,0,0,.04);
     --shadow-lg:  0 12px 40px rgba(0,0,0,.12), 0 4px 12px rgba(0,0,0,.06);
@@ -44,7 +45,7 @@
   html { scroll-behavior: smooth; }
   body {
     font-family: 'Inter', system-ui, sans-serif;
-    background: var(--bg);
+    background: linear-gradient(rgba(251, 248, 241, 0.88), rgba(251, 248, 241, 0.95)), url('wallhaven-1jwoqv.jpg') center/cover fixed;
     color: var(--text);
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
@@ -52,23 +53,24 @@
 
   /* ── NAV ───────────────────────────────────────────── */
   nav {
-    background: rgba(30,40,117,.96);
+    background: rgba(74, 59, 50, 0.96);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     padding: 0 2.5rem;
     display: flex; align-items: center; justify-content: space-between;
     height: 64px; position: sticky; top: 0; z-index: 200;
     border-bottom: 1px solid rgba(255,255,255,.08);
-    box-shadow: 0 4px 24px rgba(0,0,0,.18);
+    box-shadow: 0 4px 24px rgba(44, 36, 27, 0.25);
   }
   .nav-logo {
-    color: #fff; font-size: 1.35rem; font-weight: 800;
+    color: #fbf8f1; font-size: 1.45rem; font-weight: 700;
+    font-family: 'Lora', serif;
     letter-spacing: -.3px; cursor: pointer; user-select: none;
     display: flex; align-items: center; gap: 2px;
     transition: opacity .2s;
   }
   .nav-logo:hover { opacity: .85; }
-  .nav-logo span { color: #7c9eff; font-weight: 300; }
+  .nav-logo span { color: var(--accent-lt); font-weight: 400; font-style: italic; }
   .nav-logo-dot { width: 7px; height: 7px; background: var(--green); border-radius: 50%; margin-left: 4px; animation: glow 2s ease-in-out infinite; }
   @keyframes glow { 0%,100%{box-shadow:0 0 0 0 rgba(16,185,129,.5)} 50%{box-shadow:0 0 0 5px rgba(16,185,129,0)} }
 
@@ -101,17 +103,17 @@
 
   /* ── HERO ───────────────────────────────────────────── */
   .hero {
-    background: linear-gradient(135deg, #1e2875 0%, #3451b2 55%, #4361ee 100%);
-    color: #fff; border-radius: var(--radius-lg); padding: 3rem 2.5rem;
+    background: linear-gradient(135deg, rgba(74, 59, 50, 0.95) 0%, rgba(105, 80, 60, 0.9) 100%);
+    color: #fbf8f1; border-radius: var(--radius-lg); padding: 3rem 2.5rem;
     margin-bottom: 2rem; text-align: center; position: relative; overflow: hidden;
-    box-shadow: 0 8px 32px rgba(67,97,238,.3);
+    box-shadow: 0 8px 32px rgba(74, 59, 50, 0.3);
   }
   .hero::before {
     content:''; position:absolute; inset:0;
     background: radial-gradient(ellipse at 70% 50%, rgba(255,255,255,.08) 0%, transparent 60%);
     pointer-events:none;
   }
-  .hero h1 { font-size: 2.4rem; font-weight: 800; margin-bottom: .5rem; letter-spacing: -.04em; position:relative; }
+  .hero h1 { font-family: 'Lora', serif; font-size: 2.6rem; font-weight: 700; margin-bottom: .5rem; letter-spacing: -.02em; position:relative; }
   .hero p { color: rgba(255,255,255,.7); font-size: 1.05rem; font-weight: 400; position:relative; }
   .live-badge {
     display: inline-flex; align-items: center; gap: 8px;
@@ -130,19 +132,20 @@
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 1.25rem; }
   .card {
     background: var(--surface); border-radius: var(--radius);
-    padding: 1.5rem; box-shadow: var(--shadow-sm);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    padding: 1.6rem; box-shadow: var(--shadow-sm);
     border: 1px solid var(--border); transition: var(--transition);
     position: relative; overflow: hidden;
   }
   .card::before {
-    content:''; position:absolute; top:0; left:0; right:0; height:3px;
+    content:''; position:absolute; top:0; left:0; right:0; height:4px;
     background: linear-gradient(90deg, var(--accent), var(--accent-lt));
-    opacity:0; transition: opacity .22s;
+    opacity:0; transition: opacity .25s;
   }
-  .card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); border-color: rgba(67,97,238,.15); }
+  .card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); border-color: rgba(184, 134, 11, 0.3); }
   .card:hover::before { opacity:1; }
   .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.1rem; }
-  .card-title { font-weight: 700; font-size: .95rem; color: var(--text); letter-spacing:-.01em; }
+  .card-title { font-family: 'Lora', serif; font-weight: 700; font-size: 1.1rem; color: var(--text); letter-spacing:-.01em; }
   .card-sub { font-size: .78rem; color: var(--muted); margin-top: 3px; }
   .status-badge {
     font-size: .7rem; font-weight: 700; padding: 4px 10px;
@@ -172,6 +175,7 @@
   .stat-strip { display: grid; grid-template-columns: repeat(4,1fr); gap: 1.1rem; margin-bottom: 2rem; }
   .stat-card {
     background: var(--surface); border-radius: var(--radius);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
     padding: 1.4rem 1.2rem; text-align: center;
     box-shadow: var(--shadow-sm); border: 1px solid var(--border);
     transition: var(--transition); position:relative; overflow:hidden;
@@ -187,7 +191,8 @@
 
   /* ── SECTION TITLE ──────────────────────────────────── */
   .section-title {
-    font-size: 1rem; font-weight: 700; color: var(--text-2);
+    font-family: 'Lora', serif;
+    font-size: 1.25rem; font-weight: 700; color: var(--text-2);
     margin: 2rem 0 1rem; letter-spacing: -.01em;
     display: flex; align-items: center; gap: 8px;
   }
@@ -199,9 +204,10 @@
   .res-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
   .form-card {
     background: var(--surface); border-radius: var(--radius);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
     padding: 1.75rem; box-shadow: var(--shadow-sm); border: 1px solid var(--border);
   }
-  .form-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 1.4rem; color: var(--text); letter-spacing:-.02em; }
+  .form-card h3 { font-family: 'Lora', serif; font-size: 1.15rem; font-weight: 700; margin-bottom: 1.4rem; color: var(--text); letter-spacing:-.02em; }
   label {
     display: block; font-size: .78rem; color: var(--muted); font-weight: 600;
     margin-bottom: 5px; margin-top: 14px; letter-spacing: .03em; text-transform: uppercase;
@@ -224,8 +230,8 @@
   }
   .btn:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
   .btn:active { transform: translateY(0); }
-  .btn-primary { background: linear-gradient(135deg,var(--accent),var(--accent-lt)); color: #fff; box-shadow: 0 2px 12px rgba(67,97,238,.3); }
-  .btn-primary:hover { box-shadow: 0 6px 20px rgba(67,97,238,.4); }
+  .btn-primary { background: linear-gradient(135deg,var(--accent),var(--accent-lt)); color: var(--text); box-shadow: 0 2px 12px rgba(184,134,11,.25); }
+  .btn-primary:hover { box-shadow: 0 6px 20px rgba(184,134,11,.4); color: var(--text); }
   .btn-success { background: linear-gradient(135deg,var(--green-dk),var(--green)); color: #fff; box-shadow: 0 2px 12px rgba(16,185,129,.25); }
   .btn-success:hover { box-shadow: 0 6px 20px rgba(16,185,129,.35); }
 
@@ -247,11 +253,12 @@
   .feed-list { list-style: none; margin-top: .5rem; }
   .feed-item {
     background: var(--surface); border-radius: var(--radius-sm); padding: 1.1rem;
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
     margin-bottom: .9rem; border: 1px solid var(--border);
     display: flex; gap: 1rem; align-items: flex-start;
     transition: var(--transition); box-shadow: var(--shadow-sm);
   }
-  .feed-item:hover { box-shadow: var(--shadow-md); border-color: rgba(67,97,238,.15); }
+  .feed-item:hover { box-shadow: var(--shadow-md); border-color: rgba(184, 134, 11, 0.3); }
   .feed-avatar {
     width: 40px; height: 40px; border-radius: 50%;
     background: linear-gradient(135deg,var(--accent),var(--accent-lt)); color: #fff;
@@ -327,6 +334,7 @@
     <button class="nav-tab" data-page="reserve" onclick="showPage('reserve')">Reserve a Seat</button>
     <button class="nav-tab" data-page="feedback" onclick="showPage('feedback')">Feedback <span class="nav-badge" id="feedCount">3</span></button>
     <a href="admin.html" target="_blank" class="nav-tab" style="text-decoration:none;opacity:.7">Admin ↗</a>
+    <button class="nav-tab" id="profileBtn" style="display:none;" onclick="showProfileModal()">Profile</button>
     <button class="nav-tab" id="authBtn">Login / Register</button>
   </div>
 </nav>
@@ -474,6 +482,27 @@
 
 
 
+<!-- PROFILE MODAL -->
+<div id="profileModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:16px;padding:2rem;width:400px;box-shadow:var(--shadow-lg);">
+    <h3 style="margin-bottom:1rem;color:var(--text);font-weight:700;font-family:'Lora',serif;">Profile Management</h3>
+    
+    <div style="margin-bottom:1.5rem;">
+      <h4 style="font-size:.9rem;color:var(--text-2);margin-bottom:.5rem;">Change Password</h4>
+      <input type="password" id="inp-old-pass" placeholder="Old Password" style="width:100%;padding:8px;margin-bottom:10px;border:1px solid #ccc;border-radius:6px;">
+      <input type="password" id="inp-new-pass" placeholder="New Password" style="width:100%;padding:8px;margin-bottom:10px;border:1px solid #ccc;border-radius:6px;">
+      <button onclick="updatePassword()" style="width:100%;background:var(--accent);color:#fff;border:none;padding:8px;border-radius:8px;cursor:pointer;font-weight:600;">Update Password</button>
+    </div>
+
+    <div style="border-top:1px solid #eee;padding-top:1rem;">
+      <h4 style="font-size:.9rem;color:var(--red-dk);margin-bottom:.5rem;">Danger Zone</h4>
+      <button onclick="deleteAccount()" style="width:100%;background:var(--red-lt);color:var(--red-dk);border:1px solid var(--red);padding:8px;border-radius:8px;cursor:pointer;font-weight:600;">Delete Account</button>
+    </div>
+
+    <button onclick="document.getElementById('profileModal').style.display='none'" style="width:100%;background:#f3f4f6;color:var(--text);border:none;padding:10px;border-radius:8px;cursor:pointer;margin-top:1.5rem;font-weight:600;">Close</button>
+  </div>
+</div>
+
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
@@ -495,12 +524,15 @@ async function apiFetch(path, opts = {}) {
 // ─── AUTH ─────────────────────────────────────────────────
 function updateAuthUI() {
   const btn = document.getElementById('authBtn');
+  const profBtn = document.getElementById('profileBtn');
   if (TOKEN) {
     btn.textContent = 'Logout';
     btn.onclick = logout;
+    if(profBtn) profBtn.style.display = 'inline-flex';
   } else {
     btn.textContent = 'Login / Register';
     btn.onclick = () => document.getElementById('authModal').style.display = 'flex';
+    if(profBtn) profBtn.style.display = 'none';
   }
 }
 
@@ -533,11 +565,38 @@ async function logout() {
 
 function closeModal() { document.getElementById('authModal').style.display = 'none'; }
 
+function showProfileModal() { document.getElementById('profileModal').style.display='flex'; }
+
+async function updatePassword() {
+  const old_password = document.getElementById('inp-old-pass').value;
+  const new_password = document.getElementById('inp-new-pass').value;
+  const r = await apiFetch('/auth/me/password', { method: 'PUT', body: JSON.stringify({ old_password, new_password }) });
+  if(!r) { showToast('Network Error', '❌'); return; }
+  const data = await r.json();
+  if(r.ok) { showToast('Password updated!', '✅'); document.getElementById('inp-old-pass').value=''; document.getElementById('inp-new-pass').value=''; document.getElementById('profileModal').style.display='none'; }
+  else { showToast(data.error || 'Error', '❌'); }
+}
+
+async function deleteAccount() {
+  if(!confirm("Are you sure you want to permanently delete your account?")) return;
+  const r = await apiFetch('/auth/me', { method: 'DELETE' });
+  if(!r) { showToast('Network Error', '❌'); return; }
+  if(r.ok) {
+    showToast('Account deleted', '✅');
+    document.getElementById('profileModal').style.display='none';
+    logout();
+  } else {
+    const data = await r.json();
+    showToast(data.error || 'Session Expired', '❌');
+    if (r.status === 401) logout();
+  }
+}
+
 // ─── MOCK FALLBACK DATA ───────────────────────────────────
 const MOCK_LIBRARIES = [
-  { id:1, name:"Ana Kütüphane",              location:"A Blok",  total_capacity:300, current_occupancy:180, occupancy_percentage:60, is_open:true },
-  { id:2, name:"Mühendislik Kütüphanesi",    location:"B Blok",  total_capacity:150, current_occupancy:90,  occupancy_percentage:60, is_open:true },
-  { id:3, name:"Sosyal Bilimler Okuma Salonu",location:"Zemin", total_capacity:80,  current_occupancy:20,  occupancy_percentage:25, is_open:true },
+  { id:1, name:"Main Library",              location:"Block A",  total_capacity:300, current_occupancy:180, occupancy_percentage:60, is_open:true },
+  { id:2, name:"Engineering Library",       location:"Block B",  total_capacity:150, current_occupancy:90,  occupancy_percentage:60, is_open:true },
+  { id:3, name:"Social Sciences Reading Room",location:"Ground Floor", total_capacity:80,  current_occupancy:20,  occupancy_percentage:25, is_open:true },
 ];
 
 // ─── LIBRARY GRID ─────────────────────────────────────────
@@ -554,14 +613,18 @@ function renderLibraries(libs) {
     const pct = lib.occupancy_percentage;
     const [color, label] = getStatus(pct);
     const free = lib.total_capacity - lib.current_occupancy;
+    const busyBadge = lib.is_busy_notice ? `<span class="status-badge" style="background:#fee2e2;color:#dc2626;border:1px solid #f87171;">🚨 Busy Notice</span>` : '';
     grid.innerHTML += `
-      <div class="card">
+      <div class="card" onclick="goToReserve(${lib.id})" style="cursor:pointer;">
         <div class="card-header">
           <div>
             <div class="card-title">${lib.name}</div>
             <div class="card-sub">${lib.location}</div>
           </div>
-          <span class="status-badge status-${color}">${label}</span>
+          <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;justify-content:flex-end;">
+            ${busyBadge}
+            <span class="status-badge status-${color}">${label}</span>
+          </div>
         </div>
         <div class="progress-wrap">
           <div class="progress-label"><span>Occupancy</span><span>${pct}%</span></div>
@@ -573,6 +636,15 @@ function renderLibraries(libs) {
         </div>
       </div>`;
   });
+}
+
+function goToReserve(libId) {
+  showPage('reserve');
+  const sel = document.getElementById('res-library');
+  if (sel) {
+    sel.value = libId;
+    updateStudyAreas();
+  }
 }
 
 async function loadLibraries() {
@@ -612,7 +684,7 @@ async function updateStudyAreas() {
   if(r && r.ok) {
     const data = await r.json();
     const sel = document.getElementById('res-area');
-    sel.innerHTML = data.study_areas.map(a => `<option value="${a.id}" data-seats="${a.total_seats}">${a.name}</option>`).join('');
+    sel.innerHTML = data.study_areas.map(a => `<option value="${a.id}" data-seats="${a.total_seats}" data-avail="${a.available_seats}">${a.name}</option>`).join('');
     selectedSeat = null;
     renderSeatMap();
   }
@@ -676,28 +748,35 @@ async function submitFeedback() {
 
 // ─── SEAT MAP ─────────────────────────────────────────────
 let selectedSeat = null;
-const SEAT_PATTERNS = {
-  '09:00 – 11:00': [3, 7, 12, 25, 36],
-  '11:00 – 13:00': [1, 5, 8, 15, 22, 30, 38],
-  '13:00 – 15:00': [2, 4, 9, 13, 18, 21, 28, 35, 39],
-  '15:00 – 17:00': [1, 3, 6, 10, 14, 19, 24, 31, 37, 40],
-  '17:00 – 19:00': [2, 7, 11, 16, 20, 26, 32, 38],
-  '19:00 – 21:00': [4, 9, 17, 23, 29, 34],
-};
-let currentTotalSeats = 40;
+  let currentTotalSeats = 40;
 function getTakenSeats() {
   const timeSlot = (document.getElementById('res-time') || {}).value || '';
   const areaSel = document.getElementById('res-area');
   const libId = parseInt((document.getElementById('res-library') || {}).value) || 1;
   
+  let libPct = 0.5;
+  if (typeof apiLibraries !== 'undefined') {
+    const lib = apiLibraries.find(l => l.id === libId);
+    if (lib) libPct = lib.occupancy_percentage / 100;
+  }
+
   if (areaSel && areaSel.selectedOptions.length > 0) {
-    currentTotalSeats = parseInt(areaSel.selectedOptions[0].getAttribute('data-seats')) || 40;
+    const opt = areaSel.selectedOptions[0];
+    currentTotalSeats = parseInt(opt.getAttribute('data-seats')) || 40;
+    const availSeats = parseInt(opt.getAttribute('data-avail'));
+    if (!isNaN(availSeats)) {
+      libPct = (currentTotalSeats - availSeats) / currentTotalSeats;
+    }
   }
   
-  const base = SEAT_PATTERNS[timeSlot] || [3, 7, 12, 25];
-  const shift = (libId - 1) * 3;
-  // Use modulo currentTotalSeats to prevent fake taken seats exceeding capacity
-  return base.map(s => ((s + shift - 1) % currentTotalSeats) + 1);
+  const timeSeed = timeSlot.length;
+  const takenCount = Math.floor(currentTotalSeats * libPct);
+  const taken = [];
+  for (let i = 0; i < takenCount; i++) {
+    const seat = ((i * 7 + libId * 13 + timeSeed * 3) % currentTotalSeats) + 1;
+    if (!taken.includes(seat)) taken.push(seat);
+  }
+  return taken;
 }
 function renderSeatMap() {
   const map = document.getElementById('seatMap');

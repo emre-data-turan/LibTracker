@@ -4,8 +4,43 @@ from flask_jwt_extended import JWTManager
 from flasgger import Swagger
 from dotenv import load_dotenv
 import os
+from apscheduler.schedulers.background import BackgroundScheduler
+from datetime import datetime, timezone
+import atexit
 
 load_dotenv()
+
+def complete_expired_reservations(app):
+    with app.app_context():
+        from models import Reservation, StudyArea
+        from database import db
+        
+        now = datetime.now()
+        expired = Reservation.query.filter(
+            Reservation.status == "active",
+            Reservation.end_time <= now
+        ).all()
+        
+        if expired:
+            affected_areas = set()
+            for r in expired:
+                r.status = "completed"
+                affected_areas.add(r.study_area_id)
+            
+            db.session.flush()
+            
+            for area_id in affected_areas:
+                area = StudyArea.query.get(area_id)
+                if area:
+                    active_count = Reservation.query.filter_by(study_area_id=area_id, status="active").count()
+                    area.available_seats = max(0, area.total_seats - active_count)
+                    from models import Library
+                    library = Library.query.get(area.library_id)
+                    if library:
+                        library.current_occupancy = sum(a.total_seats - a.available_seats for a in library.study_areas)
+            
+            db.session.commit()
+            print(f"[{now.isoformat()}] Completed {len(expired)} expired reservations.")
 
 
 def create_app(config=None):
@@ -64,6 +99,11 @@ def create_app(config=None):
         from database import db
         import models  # noqa: F401 — modelleri SQLAlchemy'e kaydet
         db.create_all()
+
+    scheduler = BackgroundScheduler()
+    scheduler.add_job(func=complete_expired_reservations, args=[app], trigger="interval", minutes=1)
+    scheduler.start()
+    atexit.register(lambda: scheduler.shutdown())
 
     return app
 

@@ -1,7 +1,8 @@
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from models import Library, StudyArea, User, Reservation
+from models import Library, StudyArea, User, Reservation, Feedback, UsageStatistics
 from database import db
+from datetime import datetime, timezone, timedelta
 
 libraries_bp = Blueprint("libraries", __name__)
 
@@ -33,8 +34,24 @@ def get_libraries():
     ) if libs else 0
     available_count = sum(1 for l in libs if l.occupancy_percentage < 80)
 
+    two_hours_ago = datetime.now(timezone.utc) - timedelta(hours=2)
+    busy_feedbacks = db.session.query(
+        Feedback.library_id, db.func.count(Feedback.id)
+    ).filter(
+        Feedback.created_at >= two_hours_ago,
+        Feedback.reported_occupancy >= 80
+    ).group_by(Feedback.library_id).all()
+    
+    busy_library_ids = {lib_id for lib_id, count in busy_feedbacks if count >= 3}
+    
+    libs_data = []
+    for l in libs:
+        d = l.to_dict()
+        d["is_busy_notice"] = l.id in busy_library_ids
+        libs_data.append(d)
+
     return jsonify({
-        "libraries": [l.to_dict() for l in libs],
+        "libraries": libs_data,
         "total": len(libs),
         "available_count": available_count,
         "avg_occupancy_pct": avg_pct,
@@ -98,8 +115,10 @@ def create_library():
 
     # Varsayılan çalışma alanları ekle (3 alan)
     area_types = ["general", "silent", "group"]
+    base_seats = capacity // 3
+    rem = capacity % 3
     for i, atype in enumerate(area_types, 1):
-        seats = capacity // 3
+        seats = base_seats + (1 if i <= rem else 0)
         area = StudyArea(
             library_id=lib.id,
             name=f"{atype.capitalize()} Alan {i}",
@@ -159,3 +178,30 @@ def update_library(library_id):
     db.session.commit()
     return jsonify({"message": "Kütüphane güncellendi", "library": lib.to_dict()})
 
+
+@libraries_bp.route("/<int:library_id>", methods=["DELETE"])
+@jwt_required()
+def delete_library(library_id):
+    """
+    Sadece adminlerin kütüphane silmesi için. İlgili tüm kayıtlar silinir.
+    """
+    user_id = int(get_jwt_identity())
+    user = User.query.get(user_id)
+    if not user or not user.is_admin:
+        return jsonify({"error": "Unauthorized"}), 403
+
+    lib = Library.query.get_or_404(library_id)
+    
+    # Cascade deletes
+    Feedback.query.filter_by(library_id=lib.id).delete()
+    UsageStatistics.query.filter_by(library_id=lib.id).delete()
+    
+    areas = StudyArea.query.filter_by(library_id=lib.id).all()
+    for area in areas:
+        Reservation.query.filter_by(study_area_id=area.id).delete()
+        db.session.delete(area)
+        
+    db.session.delete(lib)
+    db.session.commit()
+    
+    return jsonify({"message": "Kütüphane ve ilişkili tüm veriler silindi"})

@@ -1,10 +1,29 @@
 from flask import Blueprint, jsonify, request
 from sqlalchemy import func
-from models import UsageStatistics, Library, Reservation
+from models import UsageStatistics, Library, Reservation, User, Feedback
 from database import db
 from datetime import datetime, timezone, timedelta
+from flask_jwt_extended import jwt_required, get_jwt_identity
 
 stats_bp = Blueprint("stats", __name__)
+
+@stats_bp.route("/overview", methods=["GET"])
+@jwt_required()
+def get_overview():
+    current_user_id = int(get_jwt_identity())
+    user = User.query.get(current_user_id)
+    if not user or not user.is_admin:
+        return jsonify({"error": "Yetkisiz erişim"}), 403
+
+    current_occupants = db.session.query(func.sum(Library.current_occupancy)).scalar() or 0
+    active_reservations = Reservation.query.filter_by(status="active").count()
+    total_feedbacks = db.session.query(func.count(Feedback.id)).scalar() or 0
+
+    return jsonify({
+        "current_occupants": int(current_occupants),
+        "active_reservations": active_reservations,
+        "total_feedbacks": total_feedbacks
+    })
 
 
 @stats_bp.route("/peak-hours", methods=["GET"])

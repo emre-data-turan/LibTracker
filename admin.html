@@ -160,7 +160,7 @@
 
 <script>
 const API = 'http://localhost:5000';
-let TOKEN = localStorage.getItem('token') || '';
+let TOKEN = '';
 
 async function apiFetch(path, options = {}) {
   const headers = { 'Content-Type': 'application/json' };
@@ -173,7 +173,8 @@ async function apiFetch(path, options = {}) {
 }
 
 async function doAdminLogin() {
-  const email = document.getElementById('inp-email').value;
+  let email = document.getElementById('inp-email').value;
+  if (email === "admin") email = "admin@libtracker.edu";
   const pass  = document.getElementById('inp-pass').value;
   const r = await fetch(API + '/auth/login', {
     method:'POST', headers:{'Content-Type':'application/json'},
@@ -182,7 +183,6 @@ async function doAdminLogin() {
   const data = await r.json();
   if(r.ok && data.user.is_admin) {
     TOKEN = data.token;
-    localStorage.setItem('token', TOKEN);
     document.getElementById('authModalAdmin').style.display = 'none';
     initCharts();
     loadAdminLibraries();
@@ -208,11 +208,21 @@ async function initCharts() {
   const libR = await apiFetch('/libraries/');
   if (libR && libR.ok) {
     const ld = await libR.json();
-    document.getElementById('st-visits').textContent = (ld.total_free_seats * 4 + 200) || '1,284';
-    document.getElementById('st-res').textContent = ld.total - ld.available_count;
+    let occ = 0;
+    if (ld.libraries) {
+      ld.libraries.forEach(l => occ += l.current_occupancy);
+    }
+    document.getElementById('st-visits').textContent = occ;
   } else {
-    document.getElementById('st-visits').textContent = '1,284';
-    document.getElementById('st-res').textContent = '87';
+    document.getElementById('st-visits').textContent = '0';
+  }
+
+  const overviewR = await apiFetch('/stats/overview');
+  if (overviewR && overviewR.ok) {
+    const od = await overviewR.json();
+    document.getElementById('st-res').textContent = od.active_reservations;
+  } else {
+    document.getElementById('st-res').textContent = '0';
   }
 
   // Peak hours
@@ -225,6 +235,16 @@ async function initCharts() {
       const first = pd.peak_hours[0];
       hourlyLabels = first.hourly_data.map(h => String(h.hour).padStart(2,'0'));
       hourlyData   = first.hourly_data.map(h => h.avg_occupancy_pct);
+
+      let maxPct = -1;
+      let peakHr = "14:00";
+      first.hourly_data.forEach(h => {
+        if (h.avg_occupancy_pct > maxPct) {
+          maxPct = h.avg_occupancy_pct;
+          peakHr = String(h.hour).padStart(2,'0') + ":00";
+        }
+      });
+      document.getElementById('st-peak').textContent = peakHr;
     }
   }
   new Chart(document.getElementById('chartHourly'), {
@@ -284,7 +304,10 @@ async function loadAdminLibraries() {
           </div>
         </div>
         
-        <button onclick="saveLibrary(${lib.id})" style="margin-top:10px; background:var(--green); color:#fff; border:none; padding:8px; border-radius:8px; cursor:pointer;">Save Changes</button>
+        <div style="display:flex; gap:10px; margin-top:10px;">
+          <button onclick="saveLibrary(${lib.id})" style="flex:1; background:var(--green); color:#fff; border:none; padding:8px; border-radius:8px; cursor:pointer;">Save Changes</button>
+          <button onclick="deleteLib(${lib.id})" style="flex:1; background:var(--red); color:#fff; border:none; padding:8px; border-radius:8px; cursor:pointer;">Delete</button>
+        </div>
       </div>
     `).join('');
   }
@@ -304,6 +327,17 @@ async function saveLibrary(id) {
     loadAdminLibraries();
   } else {
     alert('Failed to update library.');
+  }
+}
+
+async function deleteLib(id) {
+  if(!confirm("Are you sure you want to permanently delete this library and all its data?")) return;
+  const r = await apiFetch(`/libraries/${id}`, { method: 'DELETE' });
+  if(r && r.ok) {
+    alert('Library deleted successfully!');
+    loadAdminLibraries();
+  } else {
+    alert('Failed to delete library.');
   }
 }
 
