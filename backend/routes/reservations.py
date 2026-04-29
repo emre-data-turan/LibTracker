@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from models import Reservation, StudyArea
+from models import Reservation, StudyArea, Library
 from database import db
 from datetime import datetime, timezone
 
@@ -64,11 +64,11 @@ def create_reservation():
               example: "2026-05-10T12:00:00"
     responses:
       201:
-        description: Rezervasyon oluşturuldu
+        description: Reservation created
       400:
-        description: Geçersiz veri
+        description: Invalid data
       409:
-        description: Koltuk bu saatte zaten dolu
+        description: Seat already reserved
     """
     user_id = int(get_jwt_identity())
     data = request.get_json(silent=True) or {}
@@ -85,22 +85,23 @@ def create_reservation():
         start = _to_naive_utc(datetime.fromisoformat(start_str))
         end = _to_naive_utc(datetime.fromisoformat(end_str))
     except ValueError:
-        return jsonify({"error": "Tarih formatı hatalı (ISO 8601 kullanın)"}), 400
+        return jsonify({"error": "Invalid date format (use ISO 8601)"}), 400
 
     if end <= start:
-        return jsonify({"error": "end_time, start_time'dan sonra olmalı"}), 400
+        return jsonify({"error": "end_time must be after start_time"}), 400
 
     # BUG FIX: naive UTC ile karşılaştır — aware/naive karışımı TypeError'a yol açıyordu
+    # Main'in datetime.now() (local time) kullanımı sunucu timezone'una göre hatalı sonuç verir
     if start < datetime.now(timezone.utc).replace(tzinfo=None):
-        return jsonify({"error": "Geçmiş bir zaman için rezervasyon yapılamaz"}), 400
+        return jsonify({"error": "Cannot make a reservation for a past time"}), 400
 
-    area = db.get_or_404(StudyArea, study_area_id, description="Çalışma alanı bulunamadı")
+    area = db.get_or_404(StudyArea, study_area_id, description="Study area not found")
 
     if seat_number < 1 or seat_number > area.total_seats:
-        return jsonify({"error": f"Koltuk numarası 1-{area.total_seats} arasında olmalı"}), 400
+        return jsonify({"error": f"Seat number must be between 1 and {area.total_seats}"}), 400
 
     if _has_conflict(study_area_id, seat_number, start, end):
-        return jsonify({"error": "Bu koltuk seçilen saatte zaten rezerve edilmiş"}), 409
+        return jsonify({"error": "This seat is already reserved for the selected time"}), 409
 
     reservation = Reservation(
         user_id=user_id,
@@ -114,8 +115,12 @@ def create_reservation():
     active_count = Reservation.query.filter_by(study_area_id=study_area_id, status="active").count()
     area.available_seats = max(0, area.total_seats - active_count)
 
+    library = db.session.get(Library, area.library_id)
+    if library:
+        library.current_occupancy = sum(a.total_seats - a.available_seats for a in library.study_areas)
+
     db.session.commit()
-    return jsonify({"message": "Rezervasyon oluşturuldu", "reservation": reservation.to_dict()}), 201
+    return jsonify({"message": "Reservation created", "reservation": reservation.to_dict()}), 201
 
 
 @reservations_bp.route("/user/<int:user_id>", methods=["GET"])
@@ -135,13 +140,13 @@ def get_user_reservations(user_id):
         required: true
     responses:
       200:
-        description: Rezervasyon listesi
+        description: Reservation list
       403:
-        description: Başkasının rezervasyonlarına erişim yasak
+        description: Access to other user's reservations forbidden
     """
     current_user_id = int(get_jwt_identity())
     if current_user_id != user_id:
-        return jsonify({"error": "Başkasının rezervasyonlarını görüntüleyemezsiniz"}), 403
+        return jsonify({"error": "Cannot view other people's reservations"}), 403
 
     reservations = (
         Reservation.query
@@ -172,17 +177,18 @@ def cancel_reservation(reservation_id):
         required: true
     responses:
       200:
-        description: Rezervasyon iptal edildi
+        description: Reservation cancelled
       403:
-        description: Bu rezervasyon size ait değil
+        description: Reservation does not belong to you
       404:
-        description: Rezervasyon bulunamadı
+        description: Reservation not found
     """
     current_user_id = int(get_jwt_identity())
-    reservation = db.get_or_404(Reservation, reservation_id, description="Rezervasyon bulunamadı")
+    # BUG FIX: deprecated Query.get_or_404() → db.get_or_404()
+    reservation = db.get_or_404(Reservation, reservation_id, description="Reservation not found")
 
     if reservation.user_id != current_user_id:
-        return jsonify({"error": "Bu rezervasyon size ait değil"}), 403
+        return jsonify({"error": "This reservation does not belong to you"}), 403
 
     reservation.status = "cancelled"
     area = db.session.get(StudyArea, reservation.study_area_id)
@@ -191,5 +197,9 @@ def cancel_reservation(reservation_id):
         active_count = Reservation.query.filter_by(study_area_id=reservation.study_area_id, status="active").count()
         area.available_seats = max(0, area.total_seats - active_count)
 
+        library = db.session.get(Library, area.library_id)
+        if library:
+            library.current_occupancy = sum(a.total_seats - a.available_seats for a in library.study_areas)
+
     db.session.commit()
-    return jsonify({"message": "Rezervasyon iptal edildi"})
+    return jsonify({"message": "Reservation cancelled"})

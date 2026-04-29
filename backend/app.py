@@ -4,8 +4,48 @@ from flask_jwt_extended import JWTManager
 from flasgger import Swagger
 from dotenv import load_dotenv
 import os
+import atexit
+from datetime import datetime, timezone
 
 load_dotenv()
+
+
+def _complete_expired_reservations(app):
+    """Süresi dolan aktif rezervasyonları 'completed' olarak işaretle."""
+    with app.app_context():
+        from models import Reservation, StudyArea, Library
+        from database import db
+
+        # BUG FIX: naive UTC kullan — SQLite naive UTC saklar
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
+        expired = Reservation.query.filter(
+            Reservation.status == "active",
+            Reservation.end_time <= now,
+        ).all()
+
+        if not expired:
+            return
+
+        affected_areas = set()
+        for r in expired:
+            r.status = "completed"
+            affected_areas.add(r.study_area_id)
+
+        db.session.flush()
+
+        for area_id in affected_areas:
+            # BUG FIX: deprecated StudyArea.query.get() → db.session.get()
+            area = db.session.get(StudyArea, area_id)
+            if area:
+                active_count = Reservation.query.filter_by(study_area_id=area_id, status="active").count()
+                area.available_seats = max(0, area.total_seats - active_count)
+                library = db.session.get(Library, area.library_id)
+                if library:
+                    library.current_occupancy = sum(
+                        a.total_seats - a.available_seats for a in library.study_areas
+                    )
+
+        db.session.commit()
 
 
 def create_app(config=None):
@@ -64,6 +104,19 @@ def create_app(config=None):
         from database import db
         import models  # noqa: F401 — modelleri SQLAlchemy'e kaydet
         db.create_all()
+
+    # Scheduler'ı test ortamında başlatma — her test çalıştırmasında sızdırır
+    if not app.config.get("TESTING"):
+        from apscheduler.schedulers.background import BackgroundScheduler
+        scheduler = BackgroundScheduler()
+        scheduler.add_job(
+            func=_complete_expired_reservations,
+            args=[app],
+            trigger="interval",
+            minutes=1,
+        )
+        scheduler.start()
+        atexit.register(lambda: scheduler.shutdown())
 
     return app
 

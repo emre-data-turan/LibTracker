@@ -1,7 +1,8 @@
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from models import Library, StudyArea, User, Reservation
+from models import Library, StudyArea, User, Reservation, Feedback, UsageStatistics
 from database import db
+from datetime import datetime, timezone, timedelta
 from routes.utils import admin_required
 
 libraries_bp = Blueprint("libraries", __name__)
@@ -45,8 +46,24 @@ def get_libraries():
     ) if libs else 0
     available_count = sum(1 for l in libs if l.occupancy_percentage < 80)
 
+    two_hours_ago = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(hours=2)
+    busy_feedbacks = db.session.query(
+        Feedback.library_id, db.func.count(Feedback.id)
+    ).filter(
+        Feedback.created_at >= two_hours_ago,
+        Feedback.reported_occupancy >= 80
+    ).group_by(Feedback.library_id).all()
+
+    busy_library_ids = {lib_id for lib_id, count in busy_feedbacks if count >= 3}
+
+    libs_data = []
+    for l in libs:
+        d = l.to_dict()
+        d["is_busy_notice"] = l.id in busy_library_ids
+        libs_data.append(d)
+
     return jsonify({
-        "libraries": [l.to_dict() for l in libs],
+        "libraries": libs_data,
         "total": len(libs),
         "available_count": available_count,
         "avg_occupancy_pct": avg_pct,
@@ -121,7 +138,7 @@ def create_library():
         seats = seat_counts[i]
         area = StudyArea(
             library_id=lib.id,
-            name=f"{atype.capitalize()} Alan {i + 1}",
+            name=f"{atype.capitalize()} Area {i + 1}",
             total_seats=seats,
             available_seats=seats,
             area_type=atype,
@@ -166,7 +183,6 @@ def update_library(library_id):
             new_capacity = int(data["total_capacity"])
         except (ValueError, TypeError):
             return jsonify({"error": "total_capacity geçerli bir sayı olmalı"}), 400
-        # BUG FIX: sıfır veya negatif kapasite kabul edilmiyordu ama kontrol yoktu
         if new_capacity <= 0:
             return jsonify({"error": "total_capacity sıfırdan büyük olmalı"}), 400
         lib.total_capacity = new_capacity
@@ -185,7 +201,6 @@ def update_library(library_id):
     if lib.total_capacity != old_capacity:
         areas = StudyArea.query.filter_by(library_id=lib.id).all()
         if areas:
-            # BUG FIX: kalanı dağıt, veri tutarsızlığı oluşmasın
             seat_counts = _distribute_seats(lib.total_capacity, len(areas))
             for i, area in enumerate(areas):
                 active_count = Reservation.query.filter_by(study_area_id=area.id, status="active").count()
@@ -194,3 +209,37 @@ def update_library(library_id):
 
     db.session.commit()
     return jsonify({"message": "Kütüphane güncellendi", "library": lib.to_dict()})
+
+
+@libraries_bp.route("/<int:library_id>", methods=["DELETE"])
+@admin_required
+def delete_library(library_id):
+    """
+    Sadece adminlerin kütüphane silmesi için. İlgili tüm kayıtlar silinir.
+    ---
+    tags:
+      - Libraries
+    security:
+      - Bearer: []
+    responses:
+      200:
+        description: Kütüphane silindi
+      403:
+        description: Yönetici yetkisi gerekli
+      404:
+        description: Kütüphane bulunamadı
+    """
+    lib = db.get_or_404(Library, library_id)
+
+    Feedback.query.filter_by(library_id=lib.id).delete()
+    UsageStatistics.query.filter_by(library_id=lib.id).delete()
+
+    areas = StudyArea.query.filter_by(library_id=lib.id).all()
+    for area in areas:
+        Reservation.query.filter_by(study_area_id=area.id).delete()
+        db.session.delete(area)
+
+    db.session.delete(lib)
+    db.session.commit()
+
+    return jsonify({"message": "Kütüphane ve ilişkili tüm veriler silindi"})

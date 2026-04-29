@@ -1,11 +1,38 @@
 from flask import Blueprint, jsonify, request
-from sqlalchemy import extract, cast, Date
-from models import UsageStatistics, Library
+from sqlalchemy import extract, cast, Date, func
+from models import UsageStatistics, Library, Reservation, Feedback
 from database import db
 from datetime import datetime, timezone, timedelta
 from routes.utils import admin_required
 
 stats_bp = Blueprint("stats", __name__)
+
+
+@stats_bp.route("/overview", methods=["GET"])
+@admin_required
+def get_overview():
+    """
+    Admin dashboard için genel istatistik özeti.
+    ---
+    tags:
+      - Statistics
+    security:
+      - Bearer: []
+    responses:
+      200:
+        description: Genel istatistikler
+      403:
+        description: Yönetici yetkisi gerekli
+    """
+    current_occupants = db.session.query(func.sum(Library.current_occupancy)).scalar() or 0
+    active_reservations = Reservation.query.filter_by(status="active").count()
+    total_feedbacks = db.session.query(func.count(Feedback.id)).scalar() or 0
+
+    return jsonify({
+        "current_occupants": int(current_occupants),
+        "active_reservations": active_reservations,
+        "total_feedbacks": total_feedbacks,
+    })
 
 
 @stats_bp.route("/peak-hours", methods=["GET"])
@@ -38,10 +65,8 @@ def get_peak_hours():
     library_id = request.args.get("library_id", type=int)
     days = request.args.get("days", default=7, type=int)
 
-    # BUG FIX: datetime.utcnow() kullan — aware datetime SQLite naive UTC ile uyumsuz
     since = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=days)
 
-    # BUG FIX: func.strftime SQLite'a özgüydü; extract() tüm DB'lerde çalışır
     query = db.session.query(
         UsageStatistics.library_id,
         extract("hour", UsageStatistics.recorded_at).label("hour"),
@@ -114,10 +139,8 @@ def get_daily_usage():
     library_id = request.args.get("library_id", type=int)
     days = request.args.get("days", default=7, type=int)
 
-    # BUG FIX: datetime.utcnow() kullan — tutarlı naive UTC karşılaştırması
     since = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=days)
 
-    # BUG FIX: func.date() SQLite'a özgüydü; cast(..., Date) tüm DB'lerde çalışır
     day_col = cast(UsageStatistics.recorded_at, Date).label("day")
 
     query = db.session.query(

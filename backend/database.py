@@ -53,7 +53,7 @@ class SystemDatabase:
         Gerçek sensör verisi olmadığından simülasyon kullanılır.
         """
         from datetime import datetime, time, timezone, timedelta
-        from models import Library, StudyArea, UsageStatistics, User
+        from models import Library, StudyArea, UsageStatistics, User, Reservation
         from werkzeug.security import generate_password_hash
         import random
 
@@ -77,8 +77,8 @@ class SystemDatabase:
 
             libraries = [
                 Library(
-                    name="Merkez Kütüphane",
-                    location="Ana Kampüs, A Blok",
+                    name="Main Library",
+                    location="Main Campus, Block A",
                     total_capacity=300,
                     current_occupancy=random.randint(50, 250),
                     is_open=True,
@@ -86,8 +86,8 @@ class SystemDatabase:
                     closing_time=time(22, 0),
                 ),
                 Library(
-                    name="Mühendislik Kütüphanesi",
-                    location="Mühendislik Fakültesi, B Blok",
+                    name="Engineering Library",
+                    location="Engineering Faculty, Block B",
                     total_capacity=150,
                     current_occupancy=random.randint(20, 130),
                     is_open=True,
@@ -95,8 +95,8 @@ class SystemDatabase:
                     closing_time=time(21, 0),
                 ),
                 Library(
-                    name="Sosyal Bilimler Okuma Salonu",
-                    location="İdari Bina, Zemin Kat",
+                    name="Social Sciences Reading Room",
+                    location="Admin Building, Ground Floor",
                     total_capacity=80,
                     current_occupancy=random.randint(0, 70),
                     is_open=True,
@@ -109,20 +109,23 @@ class SystemDatabase:
 
             area_types = ["general", "silent", "group"]
             for lib in libraries:
-                # BUG FIX: capacity // 3 kalan kaybediyordu; dağıt
-                base = lib.total_capacity // 3
-                remainder = lib.total_capacity % 3
-                seat_counts = [base + (1 if i < remainder else 0) for i in range(3)]
-                for i, atype in enumerate(area_types):
-                    seats = seat_counts[i]
+                # BUG FIX: capacity // 3 kalan kaybediyordu; kalan ilk alanlara dağıtılır
+                base_seats = lib.total_capacity // 3
+                rem = lib.total_capacity % 3
+                total_occupied = 0
+                for i, atype in enumerate(area_types, 1):
+                    seats = base_seats + (1 if i <= rem else 0)
+                    avail = random.randint(0, seats)
+                    total_occupied += (seats - avail)
                     area = StudyArea(
                         library_id=lib.id,
-                        name=f"{atype.capitalize()} Alan {i + 1}",
+                        name=f"{atype.capitalize()} Area {i}",
                         total_seats=seats,
-                        available_seats=random.randint(0, seats),
+                        available_seats=avail,
                         area_type=atype,
                     )
                     db.session.add(area)
+                lib.current_occupancy = total_occupied
 
             # Son 7 gün için saatlik istatistik verisi (simülasyon)
             now = datetime.now(timezone.utc)
@@ -144,6 +147,21 @@ class SystemDatabase:
                             source="simulation",
                         )
                         db.session.add(stat)
+
+            for lib in libraries:
+                for area in lib.study_areas:
+                    for i in range(2):
+                        start_t = now + timedelta(hours=i)
+                        end_t = start_t + timedelta(hours=2)
+                        res = Reservation(
+                            user_id=admin_user.id,
+                            study_area_id=area.id,
+                            seat_number=i + 1,
+                            start_time=start_t,
+                            end_time=end_t,
+                            status="active"
+                        )
+                        db.session.add(res)
 
             db.session.commit()
 

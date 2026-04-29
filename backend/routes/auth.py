@@ -6,7 +6,7 @@ from flask_jwt_extended import (
     get_jwt_identity,
 )
 from werkzeug.security import generate_password_hash, check_password_hash
-from models import User
+from models import User, Reservation, Feedback
 from database import db
 import re
 
@@ -163,6 +163,65 @@ def me():
     # BUG FIX: Query.get_or_404() deprecated — db.get_or_404() kullan
     user = db.get_or_404(User, user_id)
     return jsonify({"user": user.to_dict()})
+
+
+@auth_bp.route("/me/password", methods=["PUT"])
+@jwt_required()
+def update_password():
+    """
+    Kullanıcı şifresini günceller.
+    ---
+    tags:
+      - Auth
+    security:
+      - Bearer: []
+    """
+    user_id = int(get_jwt_identity())
+    user = db.get_or_404(User, user_id)
+
+    data = request.get_json() or {}
+    old_password = data.get("old_password")
+    new_password = data.get("new_password")
+    
+    if not old_password or not new_password:
+        return jsonify({"error": "old_password ve new_password zorunludur"}), 400
+        
+    if not check_password_hash(user.password_hash, old_password):
+        return jsonify({"error": "Eski şifre hatalı"}), 401
+        
+    if len(new_password) < 6:
+        return jsonify({"error": "Yeni şifre en az 6 karakter olmalı"}), 400
+        
+    user.password_hash = generate_password_hash(new_password)
+    db.session.commit()
+    return jsonify({"message": "Şifre başarıyla güncellendi"})
+
+
+@auth_bp.route("/me", methods=["DELETE"])
+@jwt_required()
+def delete_account():
+    """
+    Kullanıcı hesabını ve ilişkili tüm verilerini siler.
+    ---
+    tags:
+      - Auth
+    security:
+      - Bearer: []
+    """
+    user_id = int(get_jwt_identity())
+    user = db.get_or_404(User, user_id)
+
+    # Cascade deletes
+    Reservation.query.filter_by(user_id=user.id).delete()
+    Feedback.query.filter_by(user_id=user.id).delete()
+    
+    db.session.delete(user)
+    db.session.commit()
+    
+    jti = get_jwt()["jti"]
+    _token_blocklist.add(jti)
+    
+    return jsonify({"message": "Hesap ve ilişkili tüm veriler başarıyla silindi"})
 
 
 def is_token_revoked(jwt_header, jwt_payload) -> bool:

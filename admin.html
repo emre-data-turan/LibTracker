@@ -1,274 +1,528 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LibTracker – Admin Dashboard</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<style>
-  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LibTracker – Admin Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    *,
+    *::before,
+    *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-  :root {
-    --primary:    #1e2875;
-    --primary-lt: #2d3db5;
-    --accent:     #4361ee;
-    --accent-lt:  #6c83f5;
-    --green:      #10b981;
-    --amber:      #f59e0b;
-    --red:        #ef4444;
-    --bg:         #f5f6fa;
-    --surface:    #ffffff;
-    --border:     rgba(0,0,0,.07);
-    --text:       #111827;
-    --text-2:     #374151;
-    --muted:      #6b7280;
-    --shadow-sm:  0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
-    --shadow-md:  0 4px 16px rgba(0,0,0,.08), 0 2px 6px rgba(0,0,0,.04);
-    --radius:     16px;
-    --transition: all .22s cubic-bezier(.4,0,.2,1);
-  }
+    :root {
+      --primary: #1e2875;
+      --primary-lt: #2d3db5;
+      --accent: #4361ee;
+      --accent-lt: #6c83f5;
+      --green: #10b981;
+      --amber: #f59e0b;
+      --red: #ef4444;
+      --bg: #f5f6fa;
+      --surface: #ffffff;
+      --border: rgba(0, 0, 0, .07);
+      --text: #111827;
+      --text-2: #374151;
+      --muted: #6b7280;
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, .06), 0 1px 2px rgba(0, 0, 0, .04);
+      --shadow-md: 0 4px 16px rgba(0, 0, 0, .08), 0 2px 6px rgba(0, 0, 0, .04);
+      --radius: 16px;
+      --transition: all .22s cubic-bezier(.4, 0, .2, 1);
+    }
 
-  html { scroll-behavior: smooth; }
-  body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; -webkit-font-smoothing: antialiased; }
+    html {
+      scroll-behavior: smooth;
+    }
 
-  nav {
-    background: rgba(30,40,117,.96); backdrop-filter: blur(20px);
-    padding: 0 2.5rem; display: flex; align-items: center; justify-content: space-between;
-    height: 64px; position: sticky; top: 0; z-index: 200;
-    border-bottom: 1px solid rgba(255,255,255,.08); box-shadow: 0 4px 24px rgba(0,0,0,.18);
-  }
-  .nav-logo { color: #fff; font-size: 1.35rem; font-weight: 800; letter-spacing: -.3px; display:flex; align-items:center; gap:2px; }
-  .nav-logo span { color: #7c9eff; font-weight: 300; }
-  .nav-badge-admin { background: var(--red); color: #fff; font-size: .65rem; font-weight: 700; padding: 2px 6px; border-radius: 20px; margin-left: 6px; }
-  .back-link {
-    color: rgba(255,255,255,.7); font-size: .875rem; text-decoration: none;
-    border: 1px solid rgba(255,255,255,.2); padding: 7px 16px; border-radius: 8px; transition: var(--transition);
-    font-weight: 500; font-family:'Inter',sans-serif;
-  }
-  .back-link:hover { background: rgba(255,255,255,.1); color: #fff; }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
 
-  .page { padding: 2.5rem 2rem; max-width: 1240px; margin: 0 auto; animation: fadeUp .3s ease; }
-  @keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+    nav {
+      background: rgba(30, 40, 117, .96);
+      backdrop-filter: blur(20px);
+      padding: 0 2.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 64px;
+      position: sticky;
+      top: 0;
+      z-index: 200;
+      border-bottom: 1px solid rgba(255, 255, 255, .08);
+      box-shadow: 0 4px 24px rgba(0, 0, 0, .18);
+    }
 
-  .info-bar {
-    background: linear-gradient(135deg, var(--primary), var(--accent)); color: #fff;
-    border-radius: var(--radius); padding: 1.2rem 1.5rem; margin-bottom: 2rem;
-    display: flex; align-items: center; gap: 1rem; font-size: .95rem; box-shadow: var(--shadow-sm);
-  }
-  .info-bar strong { font-size: 1.05rem; font-weight:700; }
+    .nav-logo {
+      color: #fff;
+      font-size: 1.35rem;
+      font-weight: 800;
+      letter-spacing: -.3px;
+      display: flex;
+      align-items: center;
+      gap: 2px;
+    }
 
-  .section-title { font-size: 1rem; font-weight: 700; color: var(--text-2); margin: 2rem 0 1rem; letter-spacing: -.01em; display:flex; align-items:center; gap:8px; }
-  .section-title::after { content:''; flex:1; height:1px; background:var(--border); }
+    .nav-logo span {
+      color: #7c9eff;
+      font-weight: 300;
+    }
 
-  .stat-strip { display: grid; grid-template-columns: repeat(4,1fr); gap: 1.1rem; margin-bottom: 2rem; }
-  .stat-card {
-    background: var(--surface); border-radius: var(--radius); padding: 1.4rem 1.2rem;
-    text-align: center; box-shadow: var(--shadow-sm); border: 1px solid var(--border);
-    transition: var(--transition); position:relative; overflow:hidden;
-  }
-  .stat-card::after { content:''; position:absolute; bottom:0; left:0; right:0; height:3px; background: linear-gradient(90deg,var(--accent),var(--accent-lt)); opacity:.5; }
-  .stat-card:hover { transform:translateY(-3px); box-shadow:var(--shadow-md); }
-  .stat-icon { font-size:1.5rem; margin-bottom:.4rem; }
-  .stat-val { font-size: 2.1rem; font-weight: 800; color: var(--primary); letter-spacing:-.04em; }
-  .stat-lbl { font-size: .75rem; color: var(--muted); margin-top: 3px; font-weight: 500; letter-spacing:.02em; text-transform:uppercase; }
+    .nav-badge-admin {
+      background: var(--red);
+      color: #fff;
+      font-size: .65rem;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 20px;
+      margin-left: 6px;
+    }
 
-  .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
-  .chart-card {
-    background: var(--surface); border-radius: var(--radius); padding: 1.5rem;
-    box-shadow: var(--shadow-sm); border: 1px solid var(--border);
-    transition: var(--transition); position:relative; overflow:hidden;
-  }
-  .chart-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background: linear-gradient(90deg, var(--accent), var(--accent-lt)); opacity:0; transition:opacity .2s; }
-  .chart-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); border-color: rgba(67,97,238,.15); }
-  .chart-card:hover::before { opacity:1; }
-  .chart-card h3 { font-weight: 700; font-size: .95rem; color: var(--text); letter-spacing:-.01em; margin-bottom:1.1rem; }
-  .chart-wrap { position: relative; height: 200px; }
+    .back-link {
+      color: rgba(255, 255, 255, .7);
+      font-size: .875rem;
+      text-decoration: none;
+      border: 1px solid rgba(255, 255, 255, .2);
+      padding: 7px 16px;
+      border-radius: 8px;
+      transition: var(--transition);
+      font-weight: 500;
+      font-family: 'Inter', sans-serif;
+    }
 
-  @media(max-width:768px) { .stat-strip,.chart-grid { grid-template-columns:1fr; } }
-</style>
+    .back-link:hover {
+      background: rgba(255, 255, 255, .1);
+      color: #fff;
+    }
+
+    .page {
+      padding: 2.5rem 2rem;
+      max-width: 1240px;
+      margin: 0 auto;
+      animation: fadeUp .3s ease;
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(10px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    .info-bar {
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      color: #fff;
+      border-radius: var(--radius);
+      padding: 1.2rem 1.5rem;
+      margin-bottom: 2rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      font-size: .95rem;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .info-bar strong {
+      font-size: 1.05rem;
+      font-weight: 700;
+    }
+
+    .section-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-2);
+      margin: 2rem 0 1rem;
+      letter-spacing: -.01em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .stat-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.1rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 1.4rem 1.2rem;
+      text-align: center;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border);
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--accent), var(--accent-lt));
+      opacity: .5;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .stat-icon {
+      font-size: 1.5rem;
+      margin-bottom: .4rem;
+    }
+
+    .stat-val {
+      font-size: 2.1rem;
+      font-weight: 800;
+      color: var(--primary);
+      letter-spacing: -.04em;
+    }
+
+    .stat-lbl {
+      font-size: .75rem;
+      color: var(--muted);
+      margin-top: 3px;
+      font-weight: 500;
+      letter-spacing: .02em;
+      text-transform: uppercase;
+    }
+
+    .chart-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+    }
+
+    .chart-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border);
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .chart-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--accent), var(--accent-lt));
+      opacity: 0;
+      transition: opacity .2s;
+    }
+
+    .chart-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-md);
+      border-color: rgba(67, 97, 238, .15);
+    }
+
+    .chart-card:hover::before {
+      opacity: 1;
+    }
+
+    .chart-card h3 {
+      font-weight: 700;
+      font-size: .95rem;
+      color: var(--text);
+      letter-spacing: -.01em;
+      margin-bottom: 1.1rem;
+    }
+
+    .chart-wrap {
+      position: relative;
+      height: 200px;
+    }
+
+    @media(max-width:768px) {
+
+      .stat-strip,
+      .chart-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
 </head>
+
 <body>
-<nav>
-  <div class="nav-logo">Lib<span>Tracker</span> <span class="nav-badge-admin">ADMIN</span></div>
-  <a href="demo.html" class="back-link">← Back to Main App</a>
-</nav>
+  <nav>
+    <div class="nav-logo">Lib<span>Tracker</span> <span class="nav-badge-admin">ADMIN</span></div>
+    <a href="demo.html" class="back-link">← Back to Main App</a>
+  </nav>
 
-<div class="page">
-  <div class="info-bar">
-    🔒 <div><strong>Admin-Only View</strong> — This page is hosted separately from the main application.</div>
-  </div>
-
-  <div class="section-title" style="margin-top:0">Admin Statistics Dashboard</div>
-
-  <div class="stat-strip">
-    <div class="stat-card"><div class="stat-icon">👥</div><div class="stat-val" id="st-visits">—</div><div class="stat-lbl">Visits Today</div></div>
-    <div class="stat-card"><div class="stat-icon">📅</div><div class="stat-val" id="st-res">—</div><div class="stat-lbl">Active Reservations</div></div>
-    <div class="stat-card"><div class="stat-icon">🔥</div><div class="stat-val" id="st-peak">14:00</div><div class="stat-lbl">Today's Peak Hour</div></div>
-    <div class="stat-card"><div class="stat-icon">⭐</div><div class="stat-val">94%</div><div class="stat-lbl">Feedback Accuracy</div></div>
-  </div>
-
-  <div class="chart-grid">
-    <div class="chart-card"><h3>Hourly Occupancy – Main Library</h3><div class="chart-wrap"><canvas id="chartHourly"></canvas></div></div>
-    <div class="chart-card"><h3>Weekly Avg Occupancy by Location</h3><div class="chart-wrap"><canvas id="chartWeekly"></canvas></div></div>
-    <div class="chart-card"><h3>Daily Reservations This Week</h3><div class="chart-wrap"><canvas id="chartRes"></canvas></div></div>
-    <div class="chart-card"><h3>Occupancy Distribution (Today)</h3><div class="chart-wrap"><canvas id="chartDist"></canvas></div></div>
-  </div>
-
-  <div style="display:flex; justify-content:space-between; align-items:center; margin: 3rem 0 1rem;">
-    <div class="section-title" style="margin:0;">Library Management</div>
-    <button onclick="showCreateModal()" style="background:var(--primary);color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-weight:600;font-family:'Inter',sans-serif;">+ New Library</button>
-  </div>
-  <div id="adminLibGrid" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:1.25rem;">
-    <!-- Filled by JS -->
-  </div>
-</div>
-
-<!-- ADMIN AUTH MODAL -->
-<div id="authModalAdmin" style="display:flex;position:fixed;inset:0;background:rgba(17,24,39,.9);backdrop-filter:blur(8px);z-index:9998;align-items:center;justify-content:center;">
-  <div style="background:#fff;border-radius:24px;width:400px;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.22);animation:fadeUp .25s ease;">
-    <div style="background:linear-gradient(135deg,#ef4444,#b91c1c);padding:2rem 2rem 1.5rem;text-align:center;">
-      <div style="font-size:2rem;margin-bottom:.4rem;">🔒</div>
-      <h3 style="color:#fff;font-size:1.2rem;font-weight:800;letter-spacing:-.02em;margin:0">Admin Access Required</h3>
+  <div class="page">
+    <div class="info-bar">
+      🔒 <div><strong>Admin-Only View</strong> — This page is hosted separately from the main application.</div>
     </div>
-    <div style="padding:1.75rem 2rem 2rem;">
-      <label>Admin Username (Email)</label>
-      <input type="text" id="inp-email" placeholder="admin" style="width:100%;padding:10px;margin-bottom:1rem;border:1px solid #ccc;border-radius:8px;">
-      <label>Password</label>
-      <input type="password" id="inp-pass" placeholder="***" style="width:100%;padding:10px;margin-bottom:1.5rem;border:1px solid #ccc;border-radius:8px;">
-      <button onclick="doAdminLogin()" style="width:100%;background:var(--primary);color:#fff;border:none;padding:12px;border-radius:12px;cursor:pointer;font-weight:600;font-size:.95rem;">Login</button>
+
+    <div class="section-title" style="margin-top:0">Admin Statistics Dashboard</div>
+
+    <div class="stat-strip">
+      <div class="stat-card">
+        <div class="stat-icon">👥</div>
+        <div class="stat-val" id="st-visits">—</div>
+        <div class="stat-lbl">Visits Today</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">📅</div>
+        <div class="stat-val" id="st-res">—</div>
+        <div class="stat-lbl">Active Reservations</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🔥</div>
+        <div class="stat-val" id="st-peak">14:00</div>
+        <div class="stat-lbl">Today's Peak Hour</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">⭐</div>
+        <div class="stat-val">94%</div>
+        <div class="stat-lbl">Feedback Accuracy</div>
+      </div>
+    </div>
+
+    <div class="chart-grid">
+      <div class="chart-card">
+        <h3>Hourly Occupancy – Main Library</h3>
+        <div class="chart-wrap"><canvas id="chartHourly"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>Weekly Avg Occupancy by Location</h3>
+        <div class="chart-wrap"><canvas id="chartWeekly"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>Daily Reservations This Week</h3>
+        <div class="chart-wrap"><canvas id="chartRes"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>Occupancy Distribution (Today)</h3>
+        <div class="chart-wrap"><canvas id="chartDist"></canvas></div>
+      </div>
+    </div>
+
+    <div style="display:flex; justify-content:space-between; align-items:center; margin: 3rem 0 1rem;">
+      <div class="section-title" style="margin:0;">Library Management</div>
+      <button onclick="showCreateModal()"
+        style="background:var(--primary);color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-weight:600;font-family:'Inter',sans-serif;">+
+        New Library</button>
+    </div>
+    <div id="adminLibGrid"
+      style="display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:1.25rem;">
+      <!-- Filled by JS -->
     </div>
   </div>
-</div>
 
-<!-- CREATE LIBRARY MODAL -->
-<div id="createLibModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center;">
-  <div style="background:#fff;border-radius:16px;padding:2rem;width:400px;">
-    <h3 style="margin-bottom:1rem;">Create New Library</h3>
-    <label>Name</label><input type="text" id="new-lib-name" style="width:100%;padding:8px;margin-bottom:10px;border:1px solid #ccc;border-radius:6px;">
-    <label>Location</label><input type="text" id="new-lib-loc" style="width:100%;padding:8px;margin-bottom:10px;border:1px solid #ccc;border-radius:6px;">
-    <label>Total Capacity</label><input type="number" id="new-lib-cap" style="width:100%;padding:8px;margin-bottom:1rem;border:1px solid #ccc;border-radius:6px;">
-    <div style="display:flex;gap:10px;">
-      <button onclick="createLibrary()" style="flex:1;background:var(--primary);color:#fff;border:none;padding:10px;border-radius:8px;cursor:pointer;">Create</button>
-      <button onclick="document.getElementById('createLibModal').style.display='none'" style="flex:1;background:#ccc;border:none;padding:10px;border-radius:8px;cursor:pointer;">Cancel</button>
+  <!-- ADMIN AUTH MODAL -->
+  <div id="authModalAdmin"
+    style="display:flex;position:fixed;inset:0;background:rgba(17,24,39,.9);backdrop-filter:blur(8px);z-index:9998;align-items:center;justify-content:center;">
+    <div
+      style="background:#fff;border-radius:24px;width:400px;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.22);animation:fadeUp .25s ease;">
+      <div style="background:linear-gradient(135deg,#ef4444,#b91c1c);padding:2rem 2rem 1.5rem;text-align:center;">
+        <div style="font-size:2rem;margin-bottom:.4rem;">🔒</div>
+        <h3 style="color:#fff;font-size:1.2rem;font-weight:800;letter-spacing:-.02em;margin:0">Admin Access Required
+        </h3>
+      </div>
+      <div style="padding:1.75rem 2rem 2rem;">
+        <label>Admin Username (Email)</label>
+        <input type="text" id="inp-email" placeholder="admin"
+          style="width:100%;padding:10px;margin-bottom:1rem;border:1px solid #ccc;border-radius:8px;">
+        <label>Password</label>
+        <input type="password" id="inp-pass" placeholder="***"
+          style="width:100%;padding:10px;margin-bottom:1.5rem;border:1px solid #ccc;border-radius:8px;">
+        <button onclick="doAdminLogin()"
+          style="width:100%;background:var(--primary);color:#fff;border:none;padding:12px;border-radius:12px;cursor:pointer;font-weight:600;font-size:.95rem;">Login</button>
+      </div>
     </div>
   </div>
-</div>
+
+  <!-- CREATE LIBRARY MODAL -->
+  <div id="createLibModal"
+    style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center;">
+    <div style="background:#fff;border-radius:16px;padding:2rem;width:400px;">
+      <h3 style="margin-bottom:1rem;">Create New Library</h3>
+      <label>Name</label><input type="text" id="new-lib-name"
+        style="width:100%;padding:8px;margin-bottom:10px;border:1px solid #ccc;border-radius:6px;">
+      <label>Location</label><input type="text" id="new-lib-loc"
+        style="width:100%;padding:8px;margin-bottom:10px;border:1px solid #ccc;border-radius:6px;">
+      <label>Total Capacity</label><input type="number" id="new-lib-cap"
+        style="width:100%;padding:8px;margin-bottom:1rem;border:1px solid #ccc;border-radius:6px;">
+      <div style="display:flex;gap:10px;">
+        <button onclick="createLibrary()"
+          style="flex:1;background:var(--primary);color:#fff;border:none;padding:10px;border-radius:8px;cursor:pointer;">Create</button>
+        <button onclick="document.getElementById('createLibModal').style.display='none'"
+          style="flex:1;background:#ccc;border:none;padding:10px;border-radius:8px;cursor:pointer;">Cancel</button>
+      </div>
+    </div>
+  </div>
 
 
-<script>
-const API = 'http://localhost:5000';
-let TOKEN = localStorage.getItem('token') || '';
+  <script>
+    const API = 'http://localhost:5000';
+    let TOKEN = '';
 
-async function apiFetch(path, options = {}) {
-  const headers = { 'Content-Type': 'application/json' };
-  if (TOKEN) headers['Authorization'] = 'Bearer ' + TOKEN;
-  try {
-    return await fetch(API + path, { ...options, headers });
-  } catch {
-    return null;
-  }
-}
-
-async function doAdminLogin() {
-  const email = document.getElementById('inp-email').value;
-  const pass  = document.getElementById('inp-pass').value;
-  const r = await fetch(API + '/auth/login', {
-    method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({email:email, password:pass})
-  });
-  const data = await r.json();
-  if(r.ok && data.user.is_admin) {
-    TOKEN = data.token;
-    localStorage.setItem('token', TOKEN);
-    document.getElementById('authModalAdmin').style.display = 'none';
-    initCharts();
-    loadAdminLibraries();
-  } else {
-    alert(data.error || "Access Denied: Admins Only.");
-  }
-}
-
-async function checkAdminAuth() {
-  if(!TOKEN) return false;
-  const r = await apiFetch('/auth/me');
-  if(r && r.ok) {
-    const data = await r.json();
-    if(data.user && data.user.is_admin) return true;
-  }
-  return false;
-}
-
-const accent = '#4f6ef7', green = '#22c55e', yellow = '#f59e0b', red = '#ef4444';
-
-async function initCharts() {
-  // Stats from API
-  const libR = await apiFetch('/libraries/');
-  if (libR && libR.ok) {
-    const ld = await libR.json();
-    document.getElementById('st-visits').textContent = (ld.total_free_seats * 4 + 200) || '1,284';
-    document.getElementById('st-res').textContent = ld.total - ld.available_count;
-  } else {
-    document.getElementById('st-visits').textContent = '1,284';
-    document.getElementById('st-res').textContent = '87';
-  }
-
-  // Peak hours
-  const peakR = await apiFetch('/stats/peak-hours?days=7');
-  let hourlyLabels = ['08','09','10','11','12','13','14','15','16','17','18','19','20'];
-  let hourlyData   = [10,22,45,60,75,68,82,79,70,65,55,40,20];
-  if (peakR && peakR.ok) {
-    const pd = await peakR.json();
-    if (pd.peak_hours && pd.peak_hours.length > 0) {
-      const first = pd.peak_hours[0];
-      hourlyLabels = first.hourly_data.map(h => String(h.hour).padStart(2,'0'));
-      hourlyData   = first.hourly_data.map(h => h.avg_occupancy_pct);
+    async function apiFetch(path, options = {}) {
+      const headers = { 'Content-Type': 'application/json' };
+      if (TOKEN) headers['Authorization'] = 'Bearer ' + TOKEN;
+      try {
+        return await fetch(API + path, { ...options, headers });
+      } catch {
+        return null;
+      }
     }
-  }
-  new Chart(document.getElementById('chartHourly'), {
-    type:'line',
-    data:{ labels:hourlyLabels, datasets:[{ label:'Occupancy %', data:hourlyData, borderColor:accent, backgroundColor:'rgba(79,110,247,.1)', fill:true, tension:.4, pointRadius:4 }] },
-    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{y:{max:100,ticks:{callback:v=>v+'%'}}} }
-  });
 
-  // Daily usage
-  const dailyR = await apiFetch('/stats/daily-usage?days=7');
-  let libNames = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-  let libData  = [30,90,82,20,95,34,78];
-  if (dailyR && dailyR.ok) {
-    const dd = await dailyR.json();
-    if (dd.daily_usage && dd.daily_usage.length > 0) {
-      libNames = dd.daily_usage.map(d => d.library_name.substring(0,10));
-      libData  = dd.daily_usage.map(d => d.daily_data.length ? d.daily_data[d.daily_data.length-1].avg_pct : 0);
+    async function doAdminLogin() {
+      let email = document.getElementById('inp-email').value;
+      if (email === "admin") email = "admin@libtracker.edu";
+      const pass = document.getElementById('inp-pass').value;
+      const r = await fetch(API + '/auth/login', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email, password: pass })
+      });
+      const data = await r.json();
+      if (r.ok && data.user.is_admin) {
+        TOKEN = data.token;
+        document.getElementById('authModalAdmin').style.display = 'none';
+        initCharts();
+        loadAdminLibraries();
+      } else {
+        alert(data.error || "Access Denied: Admins Only.");
+      }
     }
-  }
-  new Chart(document.getElementById('chartWeekly'), {
-    type:'bar',
-    data:{ labels:libNames, datasets:[{ label:'Avg %', data:libData, backgroundColor:libData.map(v=>v<50?green:v<80?yellow:red) }] },
-    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{y:{max:100}} }
-  });
 
-  new Chart(document.getElementById('chartRes'), {
-    type:'bar',
-    data:{ labels:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'], datasets:[{ label:'Reservations', data:[45,67,89,72,94,38,21], backgroundColor:accent, borderRadius:6 }] },
-    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}} }
-  });
+    async function checkAdminAuth() {
+      if (!TOKEN) return false;
+      const r = await apiFetch('/auth/me');
+      if (r && r.ok) {
+        const data = await r.json();
+        if (data.user && data.user.is_admin) return true;
+      }
+      return false;
+    }
 
-  new Chart(document.getElementById('chartDist'), {
-    type:'doughnut',
-    data:{ labels:['Available (<50%)','Moderate (50-80%)','Busy (>80%)'], datasets:[{ data:[3,2,2], backgroundColor:[green,yellow,red], hoverOffset:8 }] },
-    options:{ responsive:true, maintainAspectRatio:false }
-  });
-}
+    const accent = '#4f6ef7', green = '#22c55e', yellow = '#f59e0b', red = '#ef4444';
 
-async function loadAdminLibraries() {
-  const r = await apiFetch('/libraries/');
-  if(r && r.ok) {
-    const data = await r.json();
-    const grid = document.getElementById('adminLibGrid');
-    grid.innerHTML = data.libraries.map(lib => `
+    async function initCharts() {
+      // Stats from API
+      const libR = await apiFetch('/libraries/');
+      if (libR && libR.ok) {
+        const ld = await libR.json();
+        let occ = 0;
+        if (ld.libraries) {
+          ld.libraries.forEach(l => occ += l.current_occupancy);
+        }
+        document.getElementById('st-visits').textContent = occ;
+      } else {
+        document.getElementById('st-visits').textContent = '0';
+      }
+
+      const overviewR = await apiFetch('/stats/overview');
+      if (overviewR && overviewR.ok) {
+        const od = await overviewR.json();
+        document.getElementById('st-res').textContent = od.active_reservations;
+      } else {
+        document.getElementById('st-res').textContent = '0';
+      }
+
+      // Peak hours
+      const peakR = await apiFetch('/stats/peak-hours?days=7');
+      let hourlyLabels = ['08', '09', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20'];
+      let hourlyData = [10, 22, 45, 60, 75, 68, 82, 79, 70, 65, 55, 40, 20];
+      if (peakR && peakR.ok) {
+        const pd = await peakR.json();
+        if (pd.peak_hours && pd.peak_hours.length > 0) {
+          const first = pd.peak_hours[0];
+          hourlyLabels = first.hourly_data.map(h => String(h.hour).padStart(2, '0'));
+          hourlyData = first.hourly_data.map(h => h.avg_occupancy_pct);
+
+          let maxPct = -1;
+          let peakHr = "14:00";
+          first.hourly_data.forEach(h => {
+            if (h.avg_occupancy_pct > maxPct) {
+              maxPct = h.avg_occupancy_pct;
+              peakHr = String(h.hour).padStart(2, '0') + ":00";
+            }
+          });
+          document.getElementById('st-peak').textContent = peakHr;
+        }
+      }
+      new Chart(document.getElementById('chartHourly'), {
+        type: 'line',
+        data: { labels: hourlyLabels, datasets: [{ label: 'Occupancy %', data: hourlyData, borderColor: accent, backgroundColor: 'rgba(79,110,247,.1)', fill: true, tension: .4, pointRadius: 4 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { max: 100, ticks: { callback: v => v + '%' } } } }
+      });
+
+      // Daily usage
+      const dailyR = await apiFetch('/stats/daily-usage?days=7');
+      let libNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+      let libData = [30, 90, 82, 20, 95, 34, 78];
+      if (dailyR && dailyR.ok) {
+        const dd = await dailyR.json();
+        if (dd.daily_usage && dd.daily_usage.length > 0) {
+          libNames = dd.daily_usage.map(d => d.library_name.substring(0, 10));
+          libData = dd.daily_usage.map(d => d.daily_data.length ? d.daily_data[d.daily_data.length - 1].avg_pct : 0);
+        }
+      }
+      new Chart(document.getElementById('chartWeekly'), {
+        type: 'bar',
+        data: { labels: libNames, datasets: [{ label: 'Avg %', data: libData, backgroundColor: libData.map(v => v < 50 ? green : v < 80 ? yellow : red) }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { max: 100 } } }
+      });
+
+      new Chart(document.getElementById('chartRes'), {
+        type: 'bar',
+        data: { labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'], datasets: [{ label: 'Reservations', data: [45, 67, 89, 72, 94, 38, 21], backgroundColor: accent, borderRadius: 6 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+      });
+
+      new Chart(document.getElementById('chartDist'), {
+        type: 'doughnut',
+        data: { labels: ['Available (<50%)', 'Moderate (50-80%)', 'Busy (>80%)'], datasets: [{ data: [3, 2, 2], backgroundColor: [green, yellow, red], hoverOffset: 8 }] },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+    }
+
+    async function loadAdminLibraries() {
+      const r = await apiFetch('/libraries/');
+      if (r && r.ok) {
+        const data = await r.json();
+        const grid = document.getElementById('adminLibGrid');
+        grid.innerHTML = data.libraries.map(lib => `
       <div class="stat-card" style="text-align:left; display:flex; flex-direction:column; gap:8px;">
         <label style="font-size:.8rem;color:var(--muted)">Name</label>
         <input type="text" id="edit-name-${lib.id}" value="${lib.name}" style="padding:6px; border-radius:6px; border:1px solid #ccc; width:100%;">
@@ -284,58 +538,75 @@ async function loadAdminLibraries() {
           </div>
         </div>
         
-        <button onclick="saveLibrary(${lib.id})" style="margin-top:10px; background:var(--green); color:#fff; border:none; padding:8px; border-radius:8px; cursor:pointer;">Save Changes</button>
+        <div style="display:flex; gap:10px; margin-top:10px;">
+          <button onclick="saveLibrary(${lib.id})" style="flex:1; background:var(--green); color:#fff; border:none; padding:8px; border-radius:8px; cursor:pointer;">Save Changes</button>
+          <button onclick="deleteLib(${lib.id})" style="flex:1; background:var(--red); color:#fff; border:none; padding:8px; border-radius:8px; cursor:pointer;">Delete</button>
+        </div>
       </div>
     `).join('');
-  }
-}
+      }
+    }
 
-async function saveLibrary(id) {
-  const name = document.getElementById(`edit-name-${id}`).value;
-  const total_capacity = document.getElementById(`edit-cap-${id}`).value;
-  const current_occupancy = document.getElementById(`edit-occ-${id}`).value;
-  
-  const r = await apiFetch(`/libraries/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify({ name, total_capacity, current_occupancy })
-  });
-  if(r && r.ok) {
-    alert('Library updated successfully!');
-    loadAdminLibraries();
-  } else {
-    alert('Failed to update library.');
-  }
-}
+    async function saveLibrary(id) {
+      const name = document.getElementById(`edit-name-${id}`).value;
+      const total_capacity = document.getElementById(`edit-cap-${id}`).value;
+      const current_occupancy = document.getElementById(`edit-occ-${id}`).value;
 
-function showCreateModal() { document.getElementById('createLibModal').style.display='flex'; }
-async function createLibrary() {
-  const name = document.getElementById('new-lib-name').value;
-  const location = document.getElementById('new-lib-loc').value;
-  const total_capacity = document.getElementById('new-lib-cap').value;
-  
-  const r = await apiFetch('/libraries/', {
-    method: 'POST',
-    body: JSON.stringify({ name, location, total_capacity })
-  });
-  if(r && r.ok) {
-    alert('Library created successfully!');
-    document.getElementById('createLibModal').style.display='none';
-    loadAdminLibraries();
-  } else {
-    alert('Failed to create library.');
-  }
-}
+      const r = await apiFetch(`/libraries/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ name, total_capacity, current_occupancy })
+      });
+      if (r && r.ok) {
+        alert('Library updated successfully!');
+        loadAdminLibraries();
+      } else {
+        alert('Failed to update library.');
+      }
+    }
 
-document.addEventListener('DOMContentLoaded', async () => {
-  const isAdmin = await checkAdminAuth();
-  if(isAdmin) {
-    document.getElementById('authModalAdmin').style.display = 'none';
-    initCharts();
-    loadAdminLibraries();
-  } else {
-    document.getElementById('authModalAdmin').style.display = 'flex';
-  }
-});
-</script>
+    async function deleteLib(id) {
+      if (!confirm("Are you sure you want to permanently delete this library and all its data?")) return;
+      const r = await apiFetch(`/libraries/${id}`, { method: 'DELETE' });
+      if (r && r.ok) {
+        alert('Library deleted successfully!');
+        loadAdminLibraries();
+      } else {
+        alert('Failed to delete library.');
+      }
+    }
+
+    function showCreateModal() {
+      document.getElementById('createLibModal').style.display = 'flex';
+    }
+
+    async function createLibrary() {
+      const name = document.getElementById('new-lib-name').value;
+      const location = document.getElementById('new-lib-loc').value;
+      const total_capacity = document.getElementById('new-lib-cap').value;
+      const r = await apiFetch('/libraries/', {
+        method: 'POST',
+        body: JSON.stringify({ name, location, total_capacity })
+      });
+      if (r && r.ok) {
+        alert('Library created!');
+        document.getElementById('createLibModal').style.display = 'none';
+        loadAdminLibraries();
+      } else {
+        alert('Failed to create library.');
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      const isAdmin = await checkAdminAuth();
+      if (isAdmin) {
+        document.getElementById('authModalAdmin').style.display = 'none';
+        initCharts();
+        loadAdminLibraries();
+      } else {
+        document.getElementById('authModalAdmin').style.display = 'flex';
+      }
+    });
+  </script>
 </body>
+
 </html>
