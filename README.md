@@ -1,123 +1,123 @@
 # LibTracker
 
-Üniversite kütüphanelerinin ve çalışma alanlarının **anlık doluluk seviyelerini** izleyen, yöneten ve görüntüleyen web uygulaması.
+A web application that tracks, manages, and displays the **real-time occupancy levels** of university libraries and study areas.
 
-**Ekip:** Rebs Dev &nbsp;|&nbsp; **Hafta:** 9–14 &nbsp;|&nbsp; **Nisan–Haziran 2026**
+**Team:** Rebs Dev &nbsp;|&nbsp; **Week:** 9–14 &nbsp;|&nbsp; **April–June 2026**
 
 ---
 
-## Özellikler
+## Features
 
-| # | Özellik | Açıklama |
+| # | Feature | Description |
 |---|---------|----------|
-| 01 | Gerçek Zamanlı Doluluk | Tüm konumların anlık doluluk yüzdesi |
-| 02 | Kullanıcı Geri Bildirimi | Doğrulanmış öğrenciler doluluk güncelleyebilir |
-| 03 | Rezervasyon Sistemi | Yoğun dönemlerde koltuk önceden rezerve et |
-| 04 | Admin İstatistik Panosu | Günlük zirve saatleri için görsel grafikler |
+| 01 | Real-Time Occupancy | Live occupancy percentage of all locations |
+| 02 | User Feedback | Verified students can update occupancy |
+| 03 | Reservation System | Reserve a seat in advance during peak periods |
+| 04 | Admin Statistics Dashboard | Visual charts for daily peak hours |
 
 ---
 
-## Hızlı Başlangıç
+## Quick Start
 
-### Gereksinimler
+### Requirements
 
 - Python 3.11+
 - pip
 
-### Kurulum
+### Installation
 
 ```bash
-# Repoyu klonla
+# Clone the repository
 git clone https://github.com/emre-data-turan/LibTracker.git
 cd LibTracker
 
-# Bağımlılıkları kur
+# Install dependencies
 pip install -r backend/requirements.txt
 
-# Ortam değişkenlerini ayarla
+# Set up environment variables
 cp backend/.env.example backend/.env
 
-# Uygulamayı başlat (seed verisiyle)
+# Start the application (with seed data)
 cd backend
 python app.py
 ```
 
-Uygulama `http://localhost:5000` adresinde çalışır.
+The application runs at `http://localhost:5000`.
 Swagger UI: `http://localhost:5000/apidocs`
 
 ### Frontend
 
 ```bash
-# Tarayıcıda aç
-open demo.html   # veya dosyayı direkt tarayıcıya sürükle
+# Open in browser
+open demo.html   # or drag and drop the file directly into the browser
 ```
 
 ---
 
-## API Endpoint Listesi
+## API Endpoint List
 
 ### Libraries
 
-| Method | Endpoint | Açıklama |
+| Method | Endpoint | Description |
 |--------|----------|----------|
-| GET | `/libraries/` | Tüm kütüphaneler + anlık doluluk |
-| GET | `/libraries/<id>/occupancy` | Tek kütüphane doluluk detayı |
+| GET | `/libraries/` | All libraries + real-time occupancy |
+| GET | `/libraries/<id>/occupancy` | Single library occupancy details |
 
 ### Auth
 
-| Method | Endpoint | Açıklama |
+| Method | Endpoint | Description |
 |--------|----------|----------|
-| POST | `/auth/register` | Yeni kayıt (üniversite e-postası zorunlu) |
-| POST | `/auth/login` | Giriş → JWT token |
-| POST | `/auth/logout` | Oturum kapatma (token iptal) |
-| GET | `/auth/me` | Mevcut kullanıcı bilgisi |
+| POST | `/auth/register` | New registration (university email required) |
+| POST | `/auth/login` | Login → JWT token |
+| POST | `/auth/logout` | Logout (revoke token) |
+| GET | `/auth/me` | Current user info |
 
 ### Reservations
 
-| Method | Endpoint | Açıklama |
+| Method | Endpoint | Description |
 |--------|----------|----------|
-| POST | `/reservations/` | Yeni rezervasyon |
-| GET | `/reservations/user/<userId>` | Kullanıcının rezervasyonları |
-| DELETE | `/reservations/<id>` | Rezervasyon iptali |
+| POST | `/reservations/` | New reservation |
+| GET | `/reservations/user/<userId>` | User's reservations |
+| DELETE | `/reservations/<id>` | Cancel reservation |
 
 ### Feedback
 
-| Method | Endpoint | Açıklama |
+| Method | Endpoint | Description |
 |--------|----------|----------|
-| POST | `/feedback/` | Geri bildirim gönder (rate limit: 30 dk) |
-| GET | `/feedback/<libraryId>` | Kütüphane geri bildirimleri |
+| POST | `/feedback/` | Submit feedback (rate limit: 30 mins) |
+| GET | `/feedback/<libraryId>` | Library feedbacks |
 
 ### Statistics (Admin)
 
-| Method | Endpoint | Açıklama |
+| Method | Endpoint | Description |
 |--------|----------|----------|
-| GET | `/stats/peak-hours` | Saat bazında zirve doluluk |
-| GET | `/stats/daily-usage` | Günlük ortalama kullanım |
+| GET | `/stats/peak-hours` | Peak occupancy by hour |
+| GET | `/stats/daily-usage` | Daily average usage |
 
 ---
 
-## Proje Yapısı
+## Project Structure
 
 ```
 LibTracker/
 ├── backend/
 │   ├── app.py              # Flask app factory
-│   ├── models.py           # SQLAlchemy modelleri
+│   ├── models.py           # SQLAlchemy models
 │   ├── database.py         # Singleton SystemDatabase
 │   ├── routes/
 │   │   ├── auth.py         # JWT auth
-│   │   ├── libraries.py    # Doluluk API
-│   │   ├── reservations.py # Rezervasyon API
-│   │   ├── feedback.py     # Geri bildirim API
-│   │   └── stats.py        # Admin istatistik API
+│   │   ├── libraries.py    # Occupancy API
+│   │   ├── reservations.py # Reservation API
+│   │   ├── feedback.py     # Feedback API
+│   │   └── stats.py        # Admin stats API
 │   └── requirements.txt
 ├── frontend/
 │   └── demo.html
 ├── tests/
 │   ├── conftest.py
-│   ├── test_auth.py        # 10 auth testi
-│   ├── test_reservations.py# 11 rezervasyon testi
-│   └── test_feedback.py    # 7 feedback testi
+│   ├── test_auth.py        # 10 auth tests
+│   ├── test_reservations.py# 11 reservation tests
+│   └── test_feedback.py    # 7 feedback tests
 ├── .github/
 │   └── workflows/
 │       └── ci.yml          # GitHub Actions CI
@@ -126,27 +126,27 @@ LibTracker/
 
 ---
 
-## Mimari
+## Architecture
 
-**Katmanlı Mimari (Layered Architecture)**
+**Layered Architecture**
 
 ```
 Frontend (HTML/JS)
       ↓ HTTP
 Flask Blueprints (Routes Layer)
       ↓
-Business Logic (route handler'lar içinde)
+Business Logic (inside route handlers)
       ↓
 SQLAlchemy ORM (Data Access Layer)
       ↓
 SQLite / PostgreSQL
 ```
 
-**Tasarım Deseni:** Singleton — `SystemDatabase` sınıfı tek bir veritabanı bağlantısı yönetir.
+**Design Pattern:** Singleton — The `SystemDatabase` class manages a single database connection.
 
 ---
 
-## Testleri Çalıştırma
+## Running Tests
 
 ```bash
 pytest tests/ -v
@@ -154,16 +154,17 @@ pytest tests/ -v
 
 ---
 
-## Ekip
+## Team
 
-| İsim | Rol | Branch |
+| Name | Role | Branch |
 |------|-----|--------|
 | Sirac Ketenoglu | Backend Lead | `feature/backend-core` |
 | Emre Turan | Auth & Feedback | `feature/auth-and-feedback` |
 | Reis Yıldız | Frontend Lead | `feature/frontend-integration` |
-| Barış Küçükkıya | Test & Rezervasyon | `feature/reservation-and-tests` |
+| Barış Küçükkıya | Test & Reservation | `feature/reservation-and-tests` |
 
 ---
 
-> **Not:** Gerçek kütüphane sensör verisi olmadığından sistem seed data ve simülasyon kullanır.
-> Bu normal ve kabul edilebilir — final raporda "gelecek çalışma" olarak belirtilecek.
+> **Note:** Since there is no real library sensor data, the system uses seed data and simulation.
+> This is normal and acceptable — it will be mentioned as "future work" in the final report.
+
