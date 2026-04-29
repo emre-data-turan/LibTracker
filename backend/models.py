@@ -9,13 +9,13 @@ class User(db.Model):
     name = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(150), unique=True, nullable=False)
     password_hash = db.Column(db.String(256), nullable=False)
-    # Yalnızca üniversite e-postası kabul edilir (Emre'nin auth modülü doğrular)
     is_verified = db.Column(db.Boolean, default=False)
     is_admin = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
-    reservations = db.relationship("Reservation", back_populates="user", lazy="dynamic")
-    feedbacks = db.relationship("Feedback", back_populates="user", lazy="dynamic")
+    # BUG FIX: lazy="dynamic" SQLAlchemy 2.0'da deprecated — lazy="select" kullan
+    reservations = db.relationship("Reservation", back_populates="user", lazy="select")
+    feedbacks = db.relationship("Feedback", back_populates="user", lazy="select")
 
     def to_dict(self):
         return {
@@ -39,14 +39,14 @@ class Library(db.Model):
     location = db.Column(db.String(200), nullable=False)
     total_capacity = db.Column(db.Integer, nullable=False)
     current_occupancy = db.Column(db.Integer, default=0)
-    # Simülasyon seed verisi için: gerçek sensör olmadığından manuel güncellenir
     is_open = db.Column(db.Boolean, default=True)
     opening_time = db.Column(db.Time, nullable=True)
     closing_time = db.Column(db.Time, nullable=True)
 
-    study_areas = db.relationship("StudyArea", back_populates="library", lazy="dynamic")
-    feedbacks = db.relationship("Feedback", back_populates="library", lazy="dynamic")
-    usage_stats = db.relationship("UsageStatistics", back_populates="library", lazy="dynamic")
+    # BUG FIX: lazy="dynamic" deprecated
+    study_areas = db.relationship("StudyArea", back_populates="library", lazy="select")
+    feedbacks = db.relationship("Feedback", back_populates="library", lazy="select")
+    usage_stats = db.relationship("UsageStatistics", back_populates="library", lazy="select")
 
     @property
     def occupancy_percentage(self):
@@ -55,6 +55,7 @@ class Library(db.Model):
         return round((self.current_occupancy / self.total_capacity) * 100, 1)
 
     def to_dict(self):
+        # BUG FIX: opening_time / closing_time eksikti — frontend bu alanları kullanıyor
         return {
             "id": self.id,
             "name": self.name,
@@ -63,6 +64,8 @@ class Library(db.Model):
             "current_occupancy": self.current_occupancy,
             "occupancy_percentage": self.occupancy_percentage,
             "is_open": self.is_open,
+            "opening_time": self.opening_time.strftime("%H:%M") if self.opening_time else None,
+            "closing_time": self.closing_time.strftime("%H:%M") if self.closing_time else None,
         }
 
     def __repr__(self):
@@ -80,7 +83,8 @@ class StudyArea(db.Model):
     area_type = db.Column(db.String(50), default="general")  # general, silent, group
 
     library = db.relationship("Library", back_populates="study_areas")
-    reservations = db.relationship("Reservation", back_populates="study_area", lazy="dynamic")
+    # BUG FIX: lazy="dynamic" deprecated
+    reservations = db.relationship("Reservation", back_populates="study_area", lazy="select")
 
     def to_dict(self):
         return {
@@ -133,10 +137,9 @@ class Feedback(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     library_id = db.Column(db.Integer, db.ForeignKey("libraries.id"), nullable=False)
-    # Kullanıcının bildirdiği anlık doluluk tahmini (0–100)
     reported_occupancy = db.Column(db.Integer, nullable=False)
     comment = db.Column(db.String(500), nullable=True)
-    ip_address = db.Column(db.String(45), nullable=True)  # Rate limiting için (Emre)
+    ip_address = db.Column(db.String(45), nullable=True)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
     user = db.relationship("User", back_populates="feedbacks")
@@ -164,7 +167,6 @@ class UsageStatistics(db.Model):
     recorded_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
     occupancy_count = db.Column(db.Integer, nullable=False)
     occupancy_percentage = db.Column(db.Float, nullable=False)
-    # Seed/simülasyon verisi için kaynak bilgisi
     source = db.Column(db.String(20), default="simulation")  # simulation, sensor, feedback
 
     library = db.relationship("Library", back_populates="usage_stats")

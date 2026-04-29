@@ -160,7 +160,8 @@ def me():
         description: Kullanıcı bilgisi
     """
     user_id = int(get_jwt_identity())
-    user = User.query.get_or_404(user_id)
+    # BUG FIX: Query.get_or_404() deprecated — db.get_or_404() kullan
+    user = db.get_or_404(User, user_id)
     return jsonify({"user": user.to_dict()})
 
 
@@ -176,8 +177,8 @@ def update_password():
       - Bearer: []
     """
     user_id = int(get_jwt_identity())
-    user = User.query.get_or_404(user_id)
-    
+    user = db.get_or_404(User, user_id)
+
     data = request.get_json() or {}
     old_password = data.get("old_password")
     new_password = data.get("new_password")
@@ -208,8 +209,8 @@ def delete_account():
       - Bearer: []
     """
     user_id = int(get_jwt_identity())
-    user = User.query.get_or_404(user_id)
-    
+    user = db.get_or_404(User, user_id)
+
     # Cascade deletes
     Reservation.query.filter_by(user_id=user.id).delete()
     Feedback.query.filter_by(user_id=user.id).delete()

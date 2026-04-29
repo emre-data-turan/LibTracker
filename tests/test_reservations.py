@@ -36,7 +36,7 @@ def test_create_reservation_conflict(client, auth_headers, sample_library):
 
     second = client.post("/reservations/", json=payload, headers=auth_headers)
     assert second.status_code == 409
-    assert "rezerve" in second.get_json()["error"]
+    assert "reserved" in second.get_json()["error"].lower()
 
 
 def test_create_reservation_partial_overlap(client, auth_headers, sample_library):
@@ -142,7 +142,7 @@ def test_cancel_reservation(client, auth_headers, sample_library):
 
     cancel = client.delete(f"/reservations/{res_id}", headers=auth_headers)
     assert cancel.status_code == 200
-    assert "iptal" in cancel.get_json()["message"]
+    assert "cancel" in cancel.get_json()["message"].lower()
 
 
 def test_cancel_nonexistent_reservation(client, auth_headers):

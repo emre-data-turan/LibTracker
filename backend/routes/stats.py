@@ -1,20 +1,29 @@
 from flask import Blueprint, jsonify, request
-from sqlalchemy import func
-from models import UsageStatistics, Library, Reservation, User, Feedback
+from sqlalchemy import extract, cast, Date, func
+from models import UsageStatistics, Library, Reservation, Feedback
 from database import db
 from datetime import datetime, timezone, timedelta
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from routes.utils import admin_required
 
 stats_bp = Blueprint("stats", __name__)
 
-@stats_bp.route("/overview", methods=["GET"])
-@jwt_required()
-def get_overview():
-    current_user_id = int(get_jwt_identity())
-    user = User.query.get(current_user_id)
-    if not user or not user.is_admin:
-        return jsonify({"error": "Yetkisiz erişim"}), 403
 
+@stats_bp.route("/overview", methods=["GET"])
+@admin_required
+def get_overview():
+    """
+    Admin dashboard için genel istatistik özeti.
+    ---
+    tags:
+      - Statistics
+    security:
+      - Bearer: []
+    responses:
+      200:
+        description: Genel istatistikler
+      403:
+        description: Yönetici yetkisi gerekli
+    """
     current_occupants = db.session.query(func.sum(Library.current_occupancy)).scalar() or 0
     active_reservations = Reservation.query.filter_by(status="active").count()
     total_feedbacks = db.session.query(func.count(Feedback.id)).scalar() or 0
@@ -22,17 +31,20 @@ def get_overview():
     return jsonify({
         "current_occupants": int(current_occupants),
         "active_reservations": active_reservations,
-        "total_feedbacks": total_feedbacks
+        "total_feedbacks": total_feedbacks,
     })
 
 
 @stats_bp.route("/peak-hours", methods=["GET"])
+@admin_required
 def get_peak_hours():
     """
     Kütüphane başına günlük zirve saatlerini döndürür.
     ---
     tags:
       - Statistics
+    security:
+      - Bearer: []
     parameters:
       - name: library_id
         in: query
@@ -47,17 +59,19 @@ def get_peak_hours():
     responses:
       200:
         description: Saat bazında ortalama doluluk yüzdeleri
+      403:
+        description: Yönetici yetkisi gerekli
     """
     library_id = request.args.get("library_id", type=int)
     days = request.args.get("days", default=7, type=int)
 
-    since = datetime.now(timezone.utc) - timedelta(days=days)
+    since = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=days)
 
     query = db.session.query(
         UsageStatistics.library_id,
-        func.strftime("%H", UsageStatistics.recorded_at).label("hour"),
-        func.avg(UsageStatistics.occupancy_percentage).label("avg_pct"),
-        func.max(UsageStatistics.occupancy_percentage).label("max_pct"),
+        extract("hour", UsageStatistics.recorded_at).label("hour"),
+        db.func.avg(UsageStatistics.occupancy_percentage).label("avg_pct"),
+        db.func.max(UsageStatistics.occupancy_percentage).label("max_pct"),
     ).filter(UsageStatistics.recorded_at >= since)
 
     if library_id:
@@ -65,7 +79,7 @@ def get_peak_hours():
 
     rows = query.group_by(
         UsageStatistics.library_id,
-        func.strftime("%H", UsageStatistics.recorded_at),
+        extract("hour", UsageStatistics.recorded_at),
     ).all()
 
     result = {}
@@ -79,10 +93,9 @@ def get_peak_hours():
             "max_occupancy_pct": round(row.max_pct, 1),
         })
 
-    # Her kütüphane için zirvesaatini hesapla
     peak_summary = []
     for lib_id, hours in result.items():
-        lib = Library.query.get(lib_id)
+        lib = db.session.get(Library, lib_id)
         if not lib:
             continue
         peak = max(hours, key=lambda h: h["avg_occupancy_pct"])
@@ -98,12 +111,15 @@ def get_peak_hours():
 
 
 @stats_bp.route("/daily-usage", methods=["GET"])
+@admin_required
 def get_daily_usage():
     """
     Günlük ortalama doluluk istatistiklerini döndürür.
     ---
     tags:
       - Statistics
+    security:
+      - Bearer: []
     parameters:
       - name: library_id
         in: query
@@ -117,18 +133,22 @@ def get_daily_usage():
     responses:
       200:
         description: Gün bazında doluluk istatistikleri
+      403:
+        description: Yönetici yetkisi gerekli
     """
     library_id = request.args.get("library_id", type=int)
     days = request.args.get("days", default=7, type=int)
 
-    since = datetime.now(timezone.utc) - timedelta(days=days)
+    since = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=days)
+
+    day_col = cast(UsageStatistics.recorded_at, Date).label("day")
 
     query = db.session.query(
         UsageStatistics.library_id,
-        func.date(UsageStatistics.recorded_at).label("day"),
-        func.avg(UsageStatistics.occupancy_percentage).label("avg_pct"),
-        func.max(UsageStatistics.occupancy_percentage).label("max_pct"),
-        func.min(UsageStatistics.occupancy_percentage).label("min_pct"),
+        day_col,
+        db.func.avg(UsageStatistics.occupancy_percentage).label("avg_pct"),
+        db.func.max(UsageStatistics.occupancy_percentage).label("max_pct"),
+        db.func.min(UsageStatistics.occupancy_percentage).label("min_pct"),
     ).filter(UsageStatistics.recorded_at >= since)
 
     if library_id:
@@ -136,21 +156,21 @@ def get_daily_usage():
 
     rows = query.group_by(
         UsageStatistics.library_id,
-        func.date(UsageStatistics.recorded_at),
-    ).order_by(func.date(UsageStatistics.recorded_at)).all()
+        day_col,
+    ).order_by(day_col).all()
 
     result = {}
     for row in rows:
         lib_id = row.library_id
         if lib_id not in result:
-            lib = Library.query.get(lib_id)
+            lib = db.session.get(Library, lib_id)
             result[lib_id] = {
                 "library_id": lib_id,
                 "library_name": lib.name if lib else str(lib_id),
                 "daily_data": [],
             }
         result[lib_id]["daily_data"].append({
-            "date": row.day,
+            "date": str(row.day),
             "avg_pct": round(row.avg_pct, 1),
             "max_pct": round(row.max_pct, 1),
             "min_pct": round(row.min_pct, 1),

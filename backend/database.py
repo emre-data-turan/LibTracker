@@ -109,6 +109,7 @@ class SystemDatabase:
 
             area_types = ["general", "silent", "group"]
             for lib in libraries:
+                # BUG FIX: capacity // 3 kalan kaybediyordu; kalan ilk alanlara dağıtılır
                 base_seats = lib.total_capacity // 3
                 rem = lib.total_capacity % 3
                 total_occupied = 0
@@ -155,7 +156,7 @@ class SystemDatabase:
                         res = Reservation(
                             user_id=admin_user.id,
                             study_area_id=area.id,
-                            seat_number=i+1,
+                            seat_number=i + 1,
                             start_time=start_t,
                             end_time=end_t,
                             status="active"
