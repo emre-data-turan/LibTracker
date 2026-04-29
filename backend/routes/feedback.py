@@ -12,7 +12,9 @@ RATE_LIMIT_MINUTES = 30
 
 def _check_rate_limit(user_id: int, library_id: int) -> bool:
     """True döndürürse kullanıcı rate limit aşmış — feedback gönderilemez."""
-    since = datetime.now(timezone.utc) - timedelta(minutes=RATE_LIMIT_MINUTES)
+    # BUG FIX: datetime.utcnow() kullan; SQLite naive UTC saklar,
+    # timezone-aware datetime ile karşılaştırma güvenilmez sonuç üretiyordu.
+    since = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(minutes=RATE_LIMIT_MINUTES)
     recent = Feedback.query.filter(
         Feedback.user_id == user_id,
         Feedback.library_id == library_id,
@@ -65,10 +67,16 @@ def submit_feedback():
     if library_id is None or reported_occupancy is None:
         return jsonify({"error": "library_id ve reported_occupancy zorunludur"}), 400
 
-    if not (0 <= int(reported_occupancy) <= 100):
+    # BUG FIX: int() dönüşümü try/except içinde — string/None gelirse 500 hatası üretiyordu
+    try:
+        reported_occupancy = int(reported_occupancy)
+    except (ValueError, TypeError):
+        return jsonify({"error": "reported_occupancy geçerli bir sayı olmalı"}), 400
+
+    if not (0 <= reported_occupancy <= 100):
         return jsonify({"error": "reported_occupancy 0-100 arasında olmalı"}), 400
 
-    Library.query.get_or_404(library_id, description="Kütüphane bulunamadı")
+    db.get_or_404(Library, library_id, description="Kütüphane bulunamadı")
 
     if _check_rate_limit(user_id, library_id):
         return jsonify({
@@ -79,7 +87,7 @@ def submit_feedback():
     feedback = Feedback(
         user_id=user_id,
         library_id=library_id,
-        reported_occupancy=int(reported_occupancy),
+        reported_occupancy=reported_occupancy,
         comment=comment or None,
         ip_address=ip,
     )
@@ -112,7 +120,7 @@ def get_library_feedback(library_id):
       404:
         description: Kütüphane bulunamadı
     """
-    Library.query.get_or_404(library_id, description="Kütüphane bulunamadı")
+    db.get_or_404(Library, library_id, description="Kütüphane bulunamadı")
     limit = request.args.get("limit", default=20, type=int)
 
     feedbacks = (

@@ -7,6 +7,16 @@ from datetime import datetime, timezone
 reservations_bp = Blueprint("reservations", __name__)
 
 
+def _to_naive_utc(dt: datetime) -> datetime:
+    """
+    Aware datetime'ı naive UTC'ye dönüştürür.
+    Naive datetime UTC kabul edilir (SQLite'ın depolama biçimiyle tutarlı).
+    """
+    if dt.tzinfo is None:
+        return dt
+    return dt.astimezone(timezone.utc).replace(tzinfo=None)
+
+
 def _has_conflict(study_area_id: int, seat_number: int, start: datetime, end: datetime, exclude_id: int = None) -> bool:
     """
     Aynı koltuk için çakışan aktif rezervasyon var mı?
@@ -72,18 +82,19 @@ def create_reservation():
         return jsonify({"error": "study_area_id, seat_number, start_time, end_time zorunludur"}), 400
 
     try:
-        start = datetime.fromisoformat(start_str)
-        end = datetime.fromisoformat(end_str)
+        start = _to_naive_utc(datetime.fromisoformat(start_str))
+        end = _to_naive_utc(datetime.fromisoformat(end_str))
     except ValueError:
         return jsonify({"error": "Tarih formatı hatalı (ISO 8601 kullanın)"}), 400
 
     if end <= start:
         return jsonify({"error": "end_time, start_time'dan sonra olmalı"}), 400
 
-    if start < datetime.now(start.tzinfo or timezone.utc):
+    # BUG FIX: naive UTC ile karşılaştır — aware/naive karışımı TypeError'a yol açıyordu
+    if start < datetime.now(timezone.utc).replace(tzinfo=None):
         return jsonify({"error": "Geçmiş bir zaman için rezervasyon yapılamaz"}), 400
 
-    area = StudyArea.query.get_or_404(study_area_id, description="Çalışma alanı bulunamadı")
+    area = db.get_or_404(StudyArea, study_area_id, description="Çalışma alanı bulunamadı")
 
     if seat_number < 1 or seat_number > area.total_seats:
         return jsonify({"error": f"Koltuk numarası 1-{area.total_seats} arasında olmalı"}), 400
@@ -168,13 +179,13 @@ def cancel_reservation(reservation_id):
         description: Rezervasyon bulunamadı
     """
     current_user_id = int(get_jwt_identity())
-    reservation = Reservation.query.get_or_404(reservation_id, description="Rezervasyon bulunamadı")
+    reservation = db.get_or_404(Reservation, reservation_id, description="Rezervasyon bulunamadı")
 
     if reservation.user_id != current_user_id:
         return jsonify({"error": "Bu rezervasyon size ait değil"}), 403
 
     reservation.status = "cancelled"
-    area = StudyArea.query.get(reservation.study_area_id)
+    area = db.session.get(StudyArea, reservation.study_area_id)
     if area:
         db.session.flush()
         active_count = Reservation.query.filter_by(study_area_id=reservation.study_area_id, status="active").count()

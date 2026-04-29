@@ -109,11 +109,15 @@ class SystemDatabase:
 
             area_types = ["general", "silent", "group"]
             for lib in libraries:
-                for i, atype in enumerate(area_types, 1):
-                    seats = lib.total_capacity // 3
+                # BUG FIX: capacity // 3 kalan kaybediyordu; dağıt
+                base = lib.total_capacity // 3
+                remainder = lib.total_capacity % 3
+                seat_counts = [base + (1 if i < remainder else 0) for i in range(3)]
+                for i, atype in enumerate(area_types):
+                    seats = seat_counts[i]
                     area = StudyArea(
                         library_id=lib.id,
-                        name=f"{atype.capitalize()} Alan {i}",
+                        name=f"{atype.capitalize()} Alan {i + 1}",
                         total_seats=seats,
                         available_seats=random.randint(0, seats),
                         area_type=atype,

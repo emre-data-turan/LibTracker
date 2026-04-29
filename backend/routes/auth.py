@@ -160,7 +160,8 @@ def me():
         description: Kullanıcı bilgisi
     """
     user_id = int(get_jwt_identity())
-    user = User.query.get_or_404(user_id)
+    # BUG FIX: Query.get_or_404() deprecated — db.get_or_404() kullan
+    user = db.get_or_404(User, user_id)
     return jsonify({"user": user.to_dict()})
 
 
