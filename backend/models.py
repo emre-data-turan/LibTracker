@@ -183,3 +183,15 @@ class UsageStatistics(db.Model):
 
     def __repr__(self):
         return f"<UsageStatistics library={self.library_id} at={self.recorded_at}>"
+
+
+class TokenBlocklist(db.Model):
+    """Revoke edilmiş JWT tokenları saklar — restart sonrası da geçerli."""
+    __tablename__ = "token_blocklist"
+
+    id = db.Column(db.Integer, primary_key=True)
+    jti = db.Column(db.String(36), unique=True, nullable=False, index=True)
+    revoked_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
+    def __repr__(self):
+        return f"<TokenBlocklist jti={self.jti}>"

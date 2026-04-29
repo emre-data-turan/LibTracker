@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify, request
-from sqlalchemy import extract, cast, Date, func
+from sqlalchemy import extract, func
 from models import UsageStatistics, Library, Reservation, Feedback
 from database import db
 from datetime import datetime, timezone, timedelta
@@ -141,7 +141,7 @@ def get_daily_usage():
 
     since = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=days)
 
-    day_col = cast(UsageStatistics.recorded_at, Date).label("day")
+    day_col = func.date(UsageStatistics.recorded_at).label("day")
 
     query = db.session.query(
         UsageStatistics.library_id,

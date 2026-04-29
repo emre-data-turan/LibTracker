@@ -6,15 +6,11 @@ from flask_jwt_extended import (
     get_jwt_identity,
 )
 from werkzeug.security import generate_password_hash, check_password_hash
-from models import User, Reservation, Feedback
+from models import User, Reservation, Feedback, TokenBlocklist
 from database import db
 import re
 
 auth_bp = Blueprint("auth", __name__)
-
-# Basit in-memory token blocklist (logout için)
-# Production'da Redis veya DB kullanılır
-_token_blocklist: set[str] = set()
 
 UNIVERSITY_EMAIL_PATTERN = re.compile(
     r"^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.(edu\.tr|edu|ac\.uk|uni\.[a-z]+)$"
@@ -141,7 +137,8 @@ def logout():
         description: Token geçersiz
     """
     jti = get_jwt()["jti"]
-    _token_blocklist.add(jti)
+    db.session.add(TokenBlocklist(jti=jti))
+    db.session.commit()
     return jsonify({"message": "Oturum kapatıldı"})
 
 
@@ -219,11 +216,13 @@ def delete_account():
     db.session.commit()
     
     jti = get_jwt()["jti"]
-    _token_blocklist.add(jti)
+    db.session.add(TokenBlocklist(jti=jti))
+    db.session.commit()
     
     return jsonify({"message": "Hesap ve ilişkili tüm veriler başarıyla silindi"})
 
 
 def is_token_revoked(jwt_header, jwt_payload) -> bool:
     """Flask-JWT-Extended token_in_blocklist_loader için callback."""
-    return jwt_payload.get("jti") in _token_blocklist
+    jti = jwt_payload.get("jti")
+    return TokenBlocklist.query.filter_by(jti=jti).first() is not None
