@@ -989,20 +989,7 @@
       <div class="form-card">
         <h3>Your Active Reservations</h3>
         <ul class="res-list" id="resList">
-          <li class="res-item">
-            <div>
-              <div class="res-name">Main Library – Floor 1</div>
-              <div class="res-meta">Today · Seat 14</div>
-            </div>
-            <div class="res-time">13:00–15:00</div>
-          </li>
-          <li class="res-item">
-            <div>
-              <div class="res-name">Engineering Library</div>
-              <div class="res-meta">Tomorrow · Seat 7</div>
-            </div>
-            <div class="res-time">11:00–13:00</div>
-          </li>
+          <li style="color:var(--muted);padding:1rem">Loading reservations...</li>
         </ul>
       </div>
     </div>
@@ -1125,7 +1112,7 @@
       const r = await apiFetch('/auth/register', { method: 'POST', body: JSON.stringify({ name, email, password: pass }) });
       if (!r) { showToast('Unable to reach server', '⚠️'); return; }
       const data = await r.json();
-      if (r.ok) { TOKEN = data.token; localStorage.setItem('lt_token', TOKEN); closeModal(); updateAuthUI(); showToast('Registration successful!', '✅'); }
+      if (r.ok) { TOKEN = data.token; localStorage.setItem('lt_token', TOKEN); localStorage.setItem('lt_user_id', data.user.id); closeModal(); updateAuthUI(); loadUserReservations(); showToast('Registration successful!', '✅'); }
       else showToast(data.error || 'Error', '❌');
     }
 
@@ -1135,14 +1122,15 @@
       const r = await apiFetch('/auth/login', { method: 'POST', body: JSON.stringify({ email, password: pass }) });
       if (!r) { showToast('Unable to reach server', '⚠️'); return; }
       const data = await r.json();
-      if (r.ok) { TOKEN = data.token; localStorage.setItem('lt_token', TOKEN); closeModal(); updateAuthUI(); showToast('Login successful!', '✅'); }
+      if (r.ok) { TOKEN = data.token; localStorage.setItem('lt_token', TOKEN); localStorage.setItem('lt_user_id', data.user.id); closeModal(); updateAuthUI(); loadUserReservations(); showToast('Login successful!', '✅'); }
       else showToast(data.error || 'Error', '❌');
     }
 
     async function logout() {
       await apiFetch('/auth/logout', { method: 'POST' });
-      TOKEN = null; localStorage.removeItem('lt_token');
+      TOKEN = null; localStorage.removeItem('lt_token'); localStorage.removeItem('lt_user_id');
       updateAuthUI(); showToast('Logged out');
+      document.getElementById('resList').innerHTML = '<li style="color:var(--muted);padding:1rem">Please log in to see your reservations.</li>';
     }
 
     function closeModal() { document.getElementById('authModal').style.display = 'none'; }
@@ -1331,55 +1319,120 @@
     // ─── SEAT MAP ─────────────────────────────────────────────
     let selectedSeat = null;
     let currentTotalSeats = 40;
-    function getTakenSeats() {
+    let currentTakenSeats = [];
+
+    function _getSelectedTimeRange() {
+      const date = document.getElementById('res-date').value;
       const timeSlot = (document.getElementById('res-time') || {}).value || '';
-      const areaSel = document.getElementById('res-area');
-      const libId = parseInt((document.getElementById('res-library') || {}).value) || 1;
-
-      let libPct = 0.5;
-      if (typeof apiLibraries !== 'undefined') {
-        const lib = apiLibraries.find(l => l.id === libId);
-        if (lib) libPct = lib.occupancy_percentage / 100;
-      }
-
-      if (areaSel && areaSel.selectedOptions.length > 0) {
-        const opt = areaSel.selectedOptions[0];
-        currentTotalSeats = parseInt(opt.getAttribute('data-seats')) || 40;
-        const availSeats = parseInt(opt.getAttribute('data-avail'));
-        if (!isNaN(availSeats)) {
-          libPct = (currentTotalSeats - availSeats) / currentTotalSeats;
-        }
-      }
-
-      const timeSeed = timeSlot.length;
-      const takenCount = Math.floor(currentTotalSeats * libPct);
-      const taken = [];
-      for (let i = 0; i < takenCount; i++) {
-        const seat = ((i * 7 + libId * 13 + timeSeed * 3) % currentTotalSeats) + 1;
-        if (!taken.includes(seat)) taken.push(seat);
-      }
-      return taken;
+      if (!date || !timeSlot) return null;
+      const parts = timeSlot.split(/\s*[–-]\s*/);
+      const startH = parts[0].trim().split(':')[0].padStart(2, '0');
+      const endH = parts[1] ? parts[1].trim().split(':')[0].padStart(2, '0') : String(parseInt(startH) + 2).padStart(2, '0');
+      return { start: `${date}T${startH}:00:00`, end: `${date}T${endH}:00:00` };
     }
-    function renderSeatMap() {
+
+    async function fetchTakenSeats() {
+      const areaSel = document.getElementById('res-area');
+      if (!areaSel || !areaSel.value) return [];
+
+      const areaId = parseInt(areaSel.value);
+      if (areaSel.selectedOptions.length > 0) {
+        currentTotalSeats = parseInt(areaSel.selectedOptions[0].getAttribute('data-seats')) || 40;
+      }
+
+      const range = _getSelectedTimeRange();
+      if (!range) return [];
+
+      try {
+        const r = await apiFetch(`/reservations/area/${areaId}/seats?start_time=${encodeURIComponent(range.start)}&end_time=${encodeURIComponent(range.end)}`);
+        if (r && r.ok) {
+          const data = await r.json();
+          currentTotalSeats = data.total_seats;
+          return data.taken_seats;
+        }
+      } catch {}
+      return [];
+    }
+
+    async function renderSeatMap() {
       const map = document.getElementById('seatMap');
       if (!map) return;
+      map.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--muted);padding:.5rem;">Loading seats...</div>';
+      currentTakenSeats = await fetchTakenSeats();
       map.innerHTML = '';
-      const takenSeats = getTakenSeats();
       for (let i = 1; i <= currentTotalSeats; i++) {
-        const taken = takenSeats.includes(i);
+        const taken = currentTakenSeats.includes(i);
         const sel = selectedSeat === i;
         const cls = sel ? 'selected' : (taken ? 'taken' : 'free');
         const label = taken ? '✕' : (sel ? '★' : i);
         map.innerHTML += `<div class="seat ${cls}" onclick="selectSeat(${i},${taken})">${label}</div>`;
       }
     }
+
     function selectSeat(n, taken) {
       if (taken) return;
       selectedSeat = n;
-      renderSeatMap();
+      // Senkron re-render — veri zaten currentTakenSeats'te mevcut
+      const map = document.getElementById('seatMap');
+      if (!map) return;
+      map.innerHTML = '';
+      for (let i = 1; i <= currentTotalSeats; i++) {
+        const t = currentTakenSeats.includes(i);
+        const sel = selectedSeat === i;
+        const cls = sel ? 'selected' : (t ? 'taken' : 'free');
+        const label = t ? '✕' : (sel ? '★' : i);
+        map.innerHTML += `<div class="seat ${cls}" onclick="selectSeat(${i},${t})">${label}</div>`;
+      }
     }
 
     // ─── RESERVATION ─────────────────────────────────────────
+    async function loadUserReservations() {
+      if (!TOKEN) return;
+      const userId = localStorage.getItem('lt_user_id');
+      if (!userId) return;
+      const r = await apiFetch(`/reservations/user/${userId}`);
+      if (!r || !r.ok) {
+        document.getElementById('resList').innerHTML = '<li style="color:var(--muted);padding:1rem">Could not load reservations.</li>';
+        return;
+      }
+      const data = await r.json();
+      const list = document.getElementById('resList');
+      if (data.reservations.length === 0) {
+        list.innerHTML = '<li style="color:var(--muted);padding:1rem">No active reservations.</li>';
+        return;
+      }
+      list.innerHTML = data.reservations.map(res => {
+        const startDt = new Date(res.start_time);
+        const endDt = new Date(res.end_time);
+        const dateStr = startDt.toLocaleDateString();
+        const startStr = startDt.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+        const endStr = endDt.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+        return `<li class="res-item">
+          <div>
+            <div class="res-name">Seat ${res.seat_number}</div>
+            <div class="res-meta">${dateStr} · Area #${res.study_area_id}</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div class="res-time">${startStr}–${endStr}</div>
+            <button onclick="cancelReservation(${res.id})" style="background:var(--red-lt);color:var(--red-dk);border:1px solid var(--red);border-radius:6px;padding:3px 8px;cursor:pointer;font-size:.72rem;font-weight:600;" title="Cancel">✕</button>
+          </div>
+        </li>`;
+      }).join('');
+    }
+
+    async function cancelReservation(resId) {
+      if (!confirm('Cancel this reservation?')) return;
+      const r = await apiFetch(`/reservations/${resId}`, { method: 'DELETE' });
+      if (r && r.ok) {
+        showToast('Reservation cancelled', '✅');
+        loadUserReservations();
+        renderSeatMap();
+        loadLibraries();
+      } else {
+        showToast('Failed to cancel reservation', '❌');
+      }
+    }
+
     async function makeReservation() {
       if (!selectedSeat) { showToast('Please select a seat first', '⚠️'); return; }
       if (!TOKEN) { showToast('Please log in to make a reservation', '⚠️'); return; }
@@ -1387,32 +1440,25 @@
       const studyAreaId = parseInt(document.getElementById('res-area').value);
       const date = document.getElementById('res-date').value;
       if (!date) { showToast('Please select a date', '⚠️'); return; }
-      const timeSlot = document.getElementById('res-time').value;
-      const parts = timeSlot.split(/\s*[–-]\s*/);
-      const startH = parts[0].trim().split(':')[0].padStart(2, '0');
-      const endH = parts[1] ? parts[1].trim().split(':')[0].padStart(2, '0') : String(parseInt(startH) + 2).padStart(2, '0');
-      const start_time = `${date}T${startH}:00:00`;
-      const end_time = `${date}T${endH}:00:00`;
+
+      const range = _getSelectedTimeRange();
+      if (!range) { showToast('Please select date and time', '⚠️'); return; }
 
       const r = await apiFetch('/reservations/', {
         method: 'POST',
-        body: JSON.stringify({ study_area_id: studyAreaId, seat_number: selectedSeat, start_time, end_time }),
+        body: JSON.stringify({ study_area_id: studyAreaId, seat_number: selectedSeat, start_time: range.start, end_time: range.end }),
       });
 
       if (!r) { showToast('Unable to reach server', '⚠️'); return; }
       const data = await r.json();
 
       if (r.ok) {
-        const list = document.getElementById('resList');
-        const res = data.reservation;
-        list.innerHTML = `<li class="res-item">
-      <div><div class="res-name">Seat ${res.seat_number}</div>
-      <div class="res-meta">${date} · Area #${res.study_area_id}</div></div>
-      <div class="res-time">${timeSlot}</div>
-    </li>` + list.innerHTML;
         selectedSeat = null;
-        renderSeatMap();
         showToast('Reservation confirmed!', '✅');
+        // Senkronize güncelle: seat map, reservation listesi ve dashboard
+        await renderSeatMap();
+        loadUserReservations();
+        loadLibraries();
       } else {
         showToast(data.error || 'Reservation failed', '❌');
       }
@@ -1517,6 +1563,7 @@
       const tab = tabEl || document.querySelector(`.nav-tab[data-page="${id}"]`);
       if (tab) tab.classList.add('active');
       if (id === 'feedback' && apiLibraries.length) loadFeedback(apiLibraries[0].id);
+      if (id === 'reserve' && TOKEN) loadUserReservations();
     }
 
     // Update nav-tab onclick to pass element reference
@@ -1544,14 +1591,32 @@
       dateInput.min = today.toISOString().split('T')[0];
       dateInput.max = maxDay.toISOString().split('T')[0];
 
-      // Re-render seat map when library or time changes
+      // Re-render seat map when library, area, time, or date changes
       document.getElementById('res-library').addEventListener('change', () => { updateStudyAreas(); });
       document.getElementById('res-area').addEventListener('change', () => { selectedSeat = null; renderSeatMap(); });
       document.getElementById('res-time').addEventListener('change', () => { selectedSeat = null; renderSeatMap(); });
+      document.getElementById('res-date').addEventListener('change', () => { selectedSeat = null; renderSeatMap(); });
+
+      // Feedback library change: reload feedback list
+      document.getElementById('fb-library').addEventListener('change', (e) => { loadFeedback(parseInt(e.target.value)); });
 
       renderSeatMap();
       updateAuthUI();
       await loadLibraries();
+
+      // Giriş yapılmışsa user ID'yi çek ve reservasyonları yükle
+      if (TOKEN) {
+        const meR = await apiFetch('/auth/me');
+        if (meR && meR.ok) {
+          const meData = await meR.json();
+          localStorage.setItem('lt_user_id', meData.user.id);
+          loadUserReservations();
+        } else {
+          // Token expired — auto-logout
+          TOKEN = null; localStorage.removeItem('lt_token'); localStorage.removeItem('lt_user_id');
+          updateAuthUI();
+        }
+      }
     });
 
     // ─── MODAL TAB SWITCH ─────────────────────────────────

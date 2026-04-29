@@ -5,7 +5,7 @@ from flasgger import Swagger
 from dotenv import load_dotenv
 import os
 import atexit
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 load_dotenv()
 
@@ -57,6 +57,7 @@ def create_app(config=None):
         "DATABASE_URL", "sqlite:///libtracker.db"
     )
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+    app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=24)
 
     if config:
         app.config.update(config)

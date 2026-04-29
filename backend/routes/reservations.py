@@ -203,3 +203,68 @@ def cancel_reservation(reservation_id):
 
     db.session.commit()
     return jsonify({"message": "Reservation cancelled"})
+
+
+@reservations_bp.route("/area/<int:area_id>/seats", methods=["GET"])
+def get_taken_seats(area_id):
+    """
+    Belirli bir çalışma alanı ve zaman dilimi için dolu koltuk numaralarını döndürür.
+    ---
+    tags:
+      - Reservations
+    parameters:
+      - name: area_id
+        in: path
+        type: integer
+        required: true
+      - name: start_time
+        in: query
+        type: string
+        required: true
+        description: "ISO 8601 format: 2026-05-10T10:00:00"
+      - name: end_time
+        in: query
+        type: string
+        required: true
+        description: "ISO 8601 format: 2026-05-10T12:00:00"
+    responses:
+      200:
+        description: Dolu koltuk numaraları listesi
+      400:
+        description: Geçersiz parametreler
+      404:
+        description: Çalışma alanı bulunamadı
+    """
+    area = db.session.get(StudyArea, area_id)
+    if not area:
+        return jsonify({"error": "Study area not found"}), 404
+
+    start_str = request.args.get("start_time")
+    end_str = request.args.get("end_time")
+
+    if not start_str or not end_str:
+        return jsonify({"error": "start_time and end_time query params required"}), 400
+
+    try:
+        start = _to_naive_utc(datetime.fromisoformat(start_str))
+        end = _to_naive_utc(datetime.fromisoformat(end_str))
+    except ValueError:
+        return jsonify({"error": "Invalid date format (use ISO 8601)"}), 400
+
+    # Çakışan aktif rezervasyonların koltuk numaralarını bul
+    taken_reservations = Reservation.query.filter(
+        Reservation.study_area_id == area_id,
+        Reservation.status == "active",
+        Reservation.start_time < end,
+        Reservation.end_time > start,
+    ).all()
+
+    taken_seats = list({r.seat_number for r in taken_reservations})
+    taken_seats.sort()
+
+    return jsonify({
+        "area_id": area_id,
+        "total_seats": area.total_seats,
+        "taken_seats": taken_seats,
+        "taken_count": len(taken_seats),
+    })

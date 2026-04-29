@@ -50,7 +50,7 @@ class SystemDatabase:
     def seed(self):
         """
         Geliştirme ortamı için örnek veri yükler.
-        Gerçek sensör verisi olmadığından simülasyon kullanılır.
+        Occupancy değerleri gerçek reservation sayılarından hesaplanır.
         """
         from datetime import datetime, time, timezone, timedelta
         from models import Library, StudyArea, UsageStatistics, User, Reservation
@@ -75,12 +75,14 @@ class SystemDatabase:
             if Library.query.first():
                 return  # Zaten seed yapılmış
 
+            # Kütüphaneleri 0 dolulukla oluştur — gerçek değerler
+            # reservation'lar eklendikten sonra hesaplanacak
             libraries = [
                 Library(
                     name="Main Library",
                     location="Main Campus, Block A",
                     total_capacity=300,
-                    current_occupancy=random.randint(50, 250),
+                    current_occupancy=0,
                     is_open=True,
                     opening_time=time(8, 0),
                     closing_time=time(22, 0),
@@ -89,7 +91,7 @@ class SystemDatabase:
                     name="Engineering Library",
                     location="Engineering Faculty, Block B",
                     total_capacity=150,
-                    current_occupancy=random.randint(20, 130),
+                    current_occupancy=0,
                     is_open=True,
                     opening_time=time(8, 30),
                     closing_time=time(21, 0),
@@ -98,7 +100,7 @@ class SystemDatabase:
                     name="Social Sciences Reading Room",
                     location="Admin Building, Ground Floor",
                     total_capacity=80,
-                    current_occupancy=random.randint(0, 70),
+                    current_occupancy=0,
                     is_open=True,
                     opening_time=time(9, 0),
                     closing_time=time(20, 0),
@@ -107,28 +109,55 @@ class SystemDatabase:
             db.session.add_all(libraries)
             db.session.flush()
 
+            # Study area'ları tüm koltuklar boş olarak oluştur
             area_types = ["general", "silent", "group"]
             for lib in libraries:
-                # BUG FIX: capacity // 3 kalan kaybediyordu; kalan ilk alanlara dağıtılır
                 base_seats = lib.total_capacity // 3
                 rem = lib.total_capacity % 3
-                total_occupied = 0
                 for i, atype in enumerate(area_types, 1):
                     seats = base_seats + (1 if i <= rem else 0)
-                    avail = random.randint(0, seats)
-                    total_occupied += (seats - avail)
                     area = StudyArea(
                         library_id=lib.id,
                         name=f"{atype.capitalize()} Area {i}",
                         total_seats=seats,
-                        available_seats=avail,
+                        available_seats=seats,  # Başlangıçta tüm koltuklar boş
                         area_type=atype,
                     )
                     db.session.add(area)
+
+            db.session.flush()
+
+            # Seed reservation'lar oluştur
+            now = datetime.now(timezone.utc)
+            for lib in libraries:
+                for area in lib.study_areas:
+                    for i in range(2):
+                        start_t = now + timedelta(hours=i)
+                        end_t = start_t + timedelta(hours=2)
+                        res = Reservation(
+                            user_id=admin_user.id,
+                            study_area_id=area.id,
+                            seat_number=i + 1,
+                            start_time=start_t,
+                            end_time=end_t,
+                            status="active"
+                        )
+                        db.session.add(res)
+
+            db.session.flush()
+
+            # Occupancy değerlerini gerçek reservation'lardan hesapla
+            for lib in libraries:
+                total_occupied = 0
+                for area in lib.study_areas:
+                    active_count = Reservation.query.filter_by(
+                        study_area_id=area.id, status="active"
+                    ).count()
+                    area.available_seats = max(0, area.total_seats - active_count)
+                    total_occupied += active_count
                 lib.current_occupancy = total_occupied
 
             # Son 7 gün için saatlik istatistik verisi (simülasyon)
-            now = datetime.now(timezone.utc)
             for lib in libraries:
                 for day_offset in range(7):
                     for hour in range(8, 22):
@@ -147,21 +176,6 @@ class SystemDatabase:
                             source="simulation",
                         )
                         db.session.add(stat)
-
-            for lib in libraries:
-                for area in lib.study_areas:
-                    for i in range(2):
-                        start_t = now + timedelta(hours=i)
-                        end_t = start_t + timedelta(hours=2)
-                        res = Reservation(
-                            user_id=admin_user.id,
-                            study_area_id=area.id,
-                            seat_number=i + 1,
-                            start_time=start_t,
-                            end_time=end_t,
-                            status="active"
-                        )
-                        db.session.add(res)
 
             db.session.commit()
 
