@@ -172,8 +172,13 @@ async function loadAdminLibraries() {
   if (r && r.ok) {
     const data = await r.json();
     const grid = document.getElementById('adminLibGrid');
-    grid.innerHTML = data.libraries.map(lib => `
+    grid.innerHTML = data.libraries.map(lib => {
+      const warningHtml = lib.social_science_warning 
+        ? `<div style="background:#fee2e2; color:#b91c1c; padding:8px; border-radius:6px; font-size:0.85rem; font-weight:bold; margin-bottom:8px;">⚠️ Warning: More than 3 overlapping feedbacks detected for Social Science!</div>` 
+        : '';
+      return `
       <div class="stat-card" style="text-align:left; display:flex; flex-direction:column; gap:8px;">
+        ${warningHtml}
         <label style="font-size:.8rem;color:var(--muted)">Name</label>
         <input type="text" id="edit-name-${lib.id}" value="${escapeHtml(lib.name)}" style="padding:6px; border-radius:6px; border:1px solid #ccc; width:100%;">
         <div style="display:flex; gap:10px;">
@@ -191,7 +196,8 @@ async function loadAdminLibraries() {
           <button onclick="window._deleteLib(${lib.id})" style="flex:1; background:var(--red); color:#fff; border:none; padding:8px; border-radius:8px; cursor:pointer;">Delete</button>
         </div>
       </div>
-    `).join('');
+    `}).join('');
+
   }
 }
 
