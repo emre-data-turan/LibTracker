@@ -1,0 +1,73 @@
+/* ── Feedback List ──────────────────────────────────────── */
+.feed-list {
+  list-style: none;
+  margin-top: .5rem;
+}
+
+.feed-item {
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+  padding: 1.1rem;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  margin-bottom: .9rem;
+  border: 1px solid var(--border);
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  transition: var(--transition);
+  box-shadow: var(--shadow-sm);
+}
+
+.feed-item:hover {
+  box-shadow: var(--shadow-md);
+  border-color: rgba(184, 134, 11, 0.3);
+}
+
+.feed-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), var(--accent-lt));
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: .9rem;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(67, 97, 238, .3);
+}
+
+.feed-body { flex: 1; }
+
+.feed-user {
+  font-weight: 700;
+  font-size: .88rem;
+  color: var(--text);
+}
+
+.feed-text {
+  font-size: .85rem;
+  margin-top: 5px;
+  color: var(--text-2);
+  font-style: italic;
+}
+
+.feed-time {
+  font-size: .73rem;
+  color: var(--muted-lt);
+  margin-top: 5px;
+}
+
+.feed-tag {
+  font-size: .7rem;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 20px;
+  margin-left: 7px;
+}
+
+.tag-quiet { background: rgba(67, 97, 238, .1); color: var(--accent); }
+.tag-loud  { background: var(--amber-lt); color: var(--amber-dk); }
+.tag-full  { background: var(--red-lt); color: var(--red-dk); }

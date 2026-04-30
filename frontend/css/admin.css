@@ -1,0 +1,114 @@
+/* ── Admin Theme Overrides ─────────────────────────────── */
+:root {
+  --primary: #1e2875;
+  --primary-lt: #2d3db5;
+  --accent: #4361ee;
+  --accent-lt: #6c83f5;
+  --bg: #f5f6fa;
+  --surface: #ffffff;
+  --border: rgba(0, 0, 0, .07);
+  --text: #111827;
+  --text-2: #374151;
+  --muted: #6b7280;
+}
+
+body {
+  background: var(--bg);
+}
+
+nav {
+  background: rgba(30, 40, 117, .96);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, .18);
+}
+
+.nav-logo {
+  font-family: 'Inter', sans-serif;
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #fff;
+}
+
+.nav-logo span {
+  color: #7c9eff;
+  font-weight: 300;
+  font-style: normal;
+}
+
+.nav-badge-admin {
+  background: var(--red);
+  color: #fff;
+  font-size: .65rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 20px;
+  margin-left: 6px;
+}
+
+/* ── Admin Page (no .page hide/show) ───────────────────── */
+.page-admin {
+  padding: 2.5rem 2rem;
+  max-width: 1240px;
+  margin: 0 auto;
+  animation: fadeUp .3s ease;
+}
+
+/* ── Admin Section Title ───────────────────────────────── */
+.page-admin .section-title {
+  font-family: 'Inter', sans-serif;
+  font-size: 1rem;
+}
+
+/* ── Chart Grid ────────────────────────────────────────── */
+.chart-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+}
+
+.chart-card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border);
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+
+.chart-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-lt));
+  opacity: 0;
+  transition: opacity .2s;
+}
+
+.chart-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+  border-color: rgba(67, 97, 238, .15);
+}
+
+.chart-card:hover::before { opacity: 1; }
+
+.chart-card h3 {
+  font-weight: 700;
+  font-size: .95rem;
+  color: var(--text);
+  letter-spacing: -.01em;
+  margin-bottom: 1.1rem;
+}
+
+.chart-wrap {
+  position: relative;
+  height: 200px;
+}
+
+/* ── Admin Stat Card Overrides ─────────────────────────── */
+.page-admin .stat-card {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}

@@ -66,6 +66,7 @@ class Library(db.Model):
             "is_open": self.is_open,
             "opening_time": self.opening_time.strftime("%H:%M") if self.opening_time else None,
             "closing_time": self.closing_time.strftime("%H:%M") if self.closing_time else None,
+            "study_areas": [a.to_dict() for a in self.study_areas] if self.study_areas else [],
         }
 
     def __repr__(self):

@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LibTracker – Admin Dashboard</title>
+  <meta name="description" content="Administration panel for LibTracker library management system.">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet">
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/nav.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/modals.css">
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+
+<body>
+
+  <!-- ═══ NAVIGATION ═══ -->
+  <nav>
+    <div class="nav-logo">Lib<span>Tracker</span> <span class="nav-badge-admin">ADMIN</span></div>
+    <a href="index.html" class="back-link">← Back to App</a>
+  </nav>
+
+  <!-- ═══ ADMIN PAGE ═══ -->
+  <div class="page-admin">
+    <div class="info-bar">
+      <span>⚙️</span>
+      <div><strong>Admin Panel</strong><br>Manage libraries, monitor analytics, and review system health.</div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stat-strip">
+      <div class="stat-card">
+        <div class="stat-icon">👥</div>
+        <div class="stat-val" id="st-visits">—</div>
+        <div class="stat-lbl">Current Occupancy</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">📋</div>
+        <div class="stat-val" id="st-res">—</div>
+        <div class="stat-lbl">Active Reservations</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">⏰</div>
+        <div class="stat-val" id="st-peak">14:00</div>
+        <div class="stat-lbl">Peak Hour</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">⭐</div>
+        <div class="stat-val" id="st-accuracy">—</div>
+        <div class="stat-lbl">Feedback Accuracy</div>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="section-title">Analytics</div>
+    <div class="chart-grid">
+      <div class="chart-card">
+        <h3>📈 Hourly Occupancy (7-day avg)</h3>
+        <div class="chart-wrap"><canvas id="chartHourly"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>📊 Library Comparison</h3>
+        <div class="chart-wrap"><canvas id="chartWeekly"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>📅 Daily Reservations</h3>
+        <div class="chart-wrap"><canvas id="chartRes"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>🍩 Occupancy Distribution</h3>
+        <div class="chart-wrap"><canvas id="chartDist"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Library Management -->
+    <div class="section-title">
+      Library Management
+      <button onclick="window._showCreateModal()" style="margin-left:auto;background:var(--accent);color:#fff;border:none;padding:8px 18px;border-radius:8px;cursor:pointer;font-weight:600;font-size:.85rem;">
+        + Create New Library
+      </button>
+    </div>
+    <div class="chart-grid" id="adminLibGrid"></div>
+  </div>
+
+  <!-- ═══ AUTH MODAL (admin login) ═══ -->
+  <div id="authModalAdmin" class="modal-overlay active">
+    <div class="modal-box">
+      <div class="modal-header-admin" style="color:#fff;">
+        <div style="font-size:2rem;margin-bottom:.5rem;">🔐</div>
+        <div style="font-family:'Lora',serif;font-size:1.4rem;font-weight:700;">Admin Access</div>
+        <div style="opacity:.7;font-size:.85rem;">Restricted Area</div>
+      </div>
+      <div class="modal-body">
+        <label>Admin Username (Email)</label>
+        <input type="email" id="inp-email" placeholder="admin"
+          style="width:100%;padding:10px;margin-bottom:1rem;border:1px solid #ccc;border-radius:8px;">
+        <label>Password</label>
+        <input type="password" id="inp-pass" placeholder="***"
+          style="width:100%;padding:10px;margin-bottom:1rem;border:1px solid #ccc;border-radius:8px;">
+        <button onclick="window._doAdminLogin()"
+          style="width:100%;background:linear-gradient(135deg,#ef4444,#b91c1c);color:#fff;border:none;padding:12px;border-radius:10px;font-weight:700;cursor:pointer;font-size:1rem;">
+          Login as Admin
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ CREATE LIBRARY MODAL ═══ -->
+  <div id="createLibModal" class="modal-overlay">
+    <div class="create-lib-modal-box">
+      <h3 style="margin-bottom:1rem;">Create New Library</h3>
+      <label>Name</label>
+      <input type="text" id="new-lib-name" placeholder="Engineering Library">
+      <label>Location</label>
+      <input type="text" id="new-lib-loc" placeholder="Campus B, Building 3">
+      <label>Total Capacity</label>
+      <input type="number" id="new-lib-cap" min="1" placeholder="100">
+      <div style="display:flex;gap:10px;margin-top:1.5rem;">
+        <button onclick="window._createLibrary()"
+          style="flex:1;background:var(--accent);color:#fff;border:none;padding:10px;border-radius:8px;font-weight:600;cursor:pointer;">Create</button>
+        <button onclick="document.getElementById('createLibModal').classList.remove('active')"
+          style="flex:1;background:#e5e7eb;color:#333;border:none;padding:10px;border-radius:8px;font-weight:600;cursor:pointer;">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ ADMIN APP MODULE ═══ -->
+  <script type="module" src="js/admin-app.js"></script>
+</body>
+
+</html>

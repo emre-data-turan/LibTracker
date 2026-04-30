@@ -1,0 +1,67 @@
+/* ── Hero ───────────────────────────────────────────────── */
+.hero {
+  background: linear-gradient(135deg, rgba(74, 59, 50, 0.95) 0%, rgba(105, 80, 60, 0.9) 100%);
+  color: #fbf8f1;
+  border-radius: var(--radius-lg);
+  padding: 3rem 2.5rem;
+  margin-bottom: 2rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(74, 59, 50, 0.3);
+}
+
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 70% 50%, rgba(255, 255, 255, .08) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.hero h1 {
+  font-family: 'Lora', serif;
+  font-size: 2.6rem;
+  font-weight: 700;
+  margin-bottom: .5rem;
+  letter-spacing: -.02em;
+  position: relative;
+}
+
+.hero p {
+  color: rgba(255, 255, 255, .7);
+  font-size: 1.05rem;
+  font-weight: 400;
+  position: relative;
+}
+
+.live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(16, 185, 129, .15);
+  border: 1px solid rgba(16, 185, 129, .4);
+  color: #6ee7b7;
+  padding: 5px 14px;
+  border-radius: 20px;
+  font-size: .8rem;
+  font-weight: 600;
+  margin-bottom: 1.25rem;
+  letter-spacing: .02em;
+  position: relative;
+}
+
+.live-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--green);
+  border-radius: 50%;
+  animation: livePulse 1.8s ease-in-out infinite;
+}
+
+/* ── Library Grid ──────────────────────────────────────── */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+  gap: 1.25rem;
+}

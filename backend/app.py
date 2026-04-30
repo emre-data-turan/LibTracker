@@ -122,6 +122,25 @@ def create_app(config=None):
     app.register_blueprint(feedback_bp, url_prefix="/feedback")
     app.register_blueprint(stats_bp, url_prefix="/stats")
 
+    # ── Serve frontend static files ────────────────────────
+    frontend_dir = os.path.join(os.path.dirname(__file__), "..", "frontend")
+    frontend_dir = os.path.abspath(frontend_dir)
+
+    @app.route("/")
+    def serve_index():
+        from flask import send_from_directory
+        return send_from_directory(frontend_dir, "index.html")
+
+    @app.route("/<path:filename>")
+    def serve_frontend(filename):
+        from flask import send_from_directory
+        filepath = os.path.join(frontend_dir, filename)
+        if os.path.isfile(filepath):
+            return send_from_directory(frontend_dir, filename)
+        # Fall through to 404 for unknown paths
+        from flask import abort
+        abort(404)
+
     with app.app_context():
         from database import db
         import models  # noqa: F401 — modelleri SQLAlchemy'e kaydet
