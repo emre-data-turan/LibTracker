@@ -51,6 +51,7 @@ def _complete_expired_reservations(app):
 
 def create_app(config=None):
     app = Flask(__name__)
+    app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 
     secret_key = os.getenv("SECRET_KEY")
     jwt_secret = os.getenv("JWT_SECRET_KEY")
@@ -121,6 +122,17 @@ def create_app(config=None):
     app.register_blueprint(reservations_bp, url_prefix="/reservations")
     app.register_blueprint(feedback_bp, url_prefix="/feedback")
     app.register_blueprint(stats_bp, url_prefix="/stats")
+
+    @app.before_request
+    def clean_expired_reservations_hook():
+        _complete_expired_reservations(app)
+
+    @app.after_request
+    def add_header(response):
+        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0, max-age=0'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '-1'
+        return response
 
     # ── Serve frontend static files ────────────────────────
     frontend_dir = os.path.join(os.path.dirname(__file__), "..", "frontend")

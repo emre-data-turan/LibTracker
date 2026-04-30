@@ -2,7 +2,7 @@ from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from models import Reservation, StudyArea, Library
 from database import db
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 reservations_bp = Blueprint("reservations", __name__)
 
@@ -92,7 +92,7 @@ def create_reservation():
 
     # BUG FIX: naive UTC ile karşılaştır — aware/naive karışımı TypeError'a yol açıyordu
     # Main'in datetime.now() (local time) kullanımı sunucu timezone'una göre hatalı sonuç verir
-    if start < datetime.now(timezone.utc).replace(tzinfo=None):
+    if start < datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(minutes=5):
         return jsonify({"error": "Cannot make a reservation for a past time"}), 400
 
     area = db.get_or_404(StudyArea, study_area_id, description="Study area not found")

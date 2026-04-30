@@ -71,6 +71,26 @@ document.addEventListener('DOMContentLoaded', async () => {
   const resLib = document.getElementById('res-library');
   if (resLib) resLib.addEventListener('change', updateStudyAreas);
 
+  // Pre-fill reservation date/time so the map isn't blank
+  const now = new Date();
+  now.setMinutes(now.getMinutes() + 5); // Add 5 mins buffer to prevent 'past time' error on submit
+  
+  const yyyy = now.getFullYear();
+  const mm = String(now.getMonth() + 1).padStart(2, '0');
+  const dd = String(now.getDate()).padStart(2, '0');
+  const dateStr = `${yyyy}-${mm}-${dd}`;
+  
+  const startStr = now.toTimeString().substring(0, 5);
+  now.setHours(now.getHours() + 2);
+  const endStr = now.toTimeString().substring(0, 5);
+  
+  const dEl = document.getElementById('res-date');
+  if (dEl && !dEl.value) dEl.value = dateStr;
+  const sEl = document.getElementById('res-start');
+  if (sEl && !sEl.value) sEl.value = startStr;
+  const eEl = document.getElementById('res-end');
+  if (eEl && !eEl.value) eEl.value = endStr;
+
   // Area select + time changes → update seat map
   ['res-area', 'res-date', 'res-start', 'res-end'].forEach(id => {
     const el = document.getElementById(id);

@@ -69,8 +69,9 @@ async function initCharts() {
   if (overviewR && overviewR.ok) {
     const od = await overviewR.json();
     document.getElementById('st-res').textContent = od.active_reservations;
-    const totalFb = od.total_feedbacks || 0;
-    const accuracy = totalFb > 0 ? Math.min(100, Math.round((totalFb / Math.max(1, od.active_reservations)) * 50)) : 0;
+    const recentFb = od.recent_feedbacks || 0;
+    const recentRes = od.recent_reservations || 0;
+    const accuracy = recentFb > 0 ? Math.min(100, Math.round((recentFb / Math.max(1, recentRes)) * 50)) : 0;
     document.getElementById('st-accuracy').textContent = accuracy + '%';
   } else {
     document.getElementById('st-res').textContent = '0';
@@ -84,12 +85,21 @@ async function initCharts() {
   if (peakR && peakR.ok) {
     const pd = await peakR.json();
     if (pd.peak_hours && pd.peak_hours.length > 0) {
-      const first = pd.peak_hours[0];
-      hourlyLabels = first.hourly_data.map(h => String(h.hour).padStart(2,'0'));
-      hourlyData = first.hourly_data.map(h => h.avg_occupancy_pct);
+      const hourMap = {};
+      pd.peak_hours.forEach(lib => {
+        lib.hourly_data.forEach(h => {
+          if (!hourMap[h.hour]) hourMap[h.hour] = { sum: 0, count: 0 };
+          hourMap[h.hour].sum += h.avg_occupancy_pct;
+          hourMap[h.hour].count += 1;
+        });
+      });
+      const sortedHours = Object.keys(hourMap).sort((a,b) => parseInt(a) - parseInt(b));
+      hourlyLabels = sortedHours.map(h => String(h).padStart(2,'0'));
+      hourlyData = sortedHours.map(h => Math.round(hourMap[h].sum / hourMap[h].count));
+
       let maxPct = -1, peakHr = '14:00';
-      first.hourly_data.forEach(h => {
-        if (h.avg_occupancy_pct > maxPct) { maxPct = h.avg_occupancy_pct; peakHr = String(h.hour).padStart(2,'0') + ':00'; }
+      hourlyData.forEach((pct, idx) => {
+        if (pct > maxPct) { maxPct = pct; peakHr = hourlyLabels[idx] + ':00'; }
       });
       document.getElementById('st-peak').textContent = peakHr;
     }
@@ -120,23 +130,20 @@ async function initCharts() {
   });
 
   // Reservation chart from API
-  const resR = await apiFetch('/stats/daily-usage?days=7');
+  const resR = await apiFetch('/stats/daily-reservations?days=7');
   let resDayLabels = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
   let resDayData = [45,67,89,72,94,38,21];
   if (resR && resR.ok) {
     const rd = await resR.json();
-    if (rd.daily_usage && rd.daily_usage.length > 0) {
-      const first = rd.daily_usage[0];
-      if (first.daily_data && first.daily_data.length > 0) {
-        resDayLabels = first.daily_data.map(d => d.date.substring(5));
-        resDayData = first.daily_data.map(d => Math.round(d.avg_pct));
-      }
+    if (rd.daily_reservations && rd.daily_reservations.length > 0) {
+      resDayLabels = rd.daily_reservations.map(d => d.date.substring(5));
+      resDayData = rd.daily_reservations.map(d => d.count);
     }
   }
 
   new Chart(document.getElementById('chartRes'), {
     type: 'bar',
-    data: { labels: resDayLabels, datasets: [{ label: 'Avg Occupancy %', data: resDayData, backgroundColor: accent, borderRadius: 6 }] },
+    data: { labels: resDayLabels, datasets: [{ label: 'Reservations', data: resDayData, backgroundColor: accent, borderRadius: 6 }] },
     options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
   });
 

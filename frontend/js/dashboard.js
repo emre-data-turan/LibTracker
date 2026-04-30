@@ -62,7 +62,11 @@ function populateLibrarySelects(libs) {
   ['res-library', 'fb-library'].forEach(id => {
     const sel = document.getElementById(id);
     if (!sel) return;
+    const currentVal = sel.value;
     sel.innerHTML = libs.map(l => `<option value="${l.id}">${escapeHtml(l.name)}</option>`).join('');
+    if (currentVal && libs.find(l => l.id == currentVal)) {
+      sel.value = currentVal;
+    }
   });
   // Trigger study area update for reservation page
   const resLib = document.getElementById('res-library');

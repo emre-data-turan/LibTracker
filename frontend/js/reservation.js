@@ -1,7 +1,7 @@
 // ── Reservation Module ────────────────────────────────────
 import { apiFetch, getToken, getUserId } from './api.js';
 import { escapeHtml, showToast } from './utils.js';
-import { apiLibraries } from './dashboard.js';
+import { apiLibraries, loadLibraries } from './dashboard.js';
 
 let selectedSeat = null;
 let currentTotalSeats = 0;
@@ -14,9 +14,15 @@ export async function updateStudyAreas() {
   const lib = apiLibraries.find(l => l.id == libId);
   const sel = document.getElementById('res-area');
   if (!sel || !lib || !lib.study_areas) return;
+  
+  const currentVal = sel.value;
   sel.innerHTML = lib.study_areas.map(a =>
-    `<option value="${a.id}">${escapeHtml(a.name)} (${a.available_seats}/${a.total_seats} free)</option>`
+    `<option value="${a.id}">${escapeHtml(a.name)}</option>`
   ).join('');
+  
+  if (currentVal && lib.study_areas.find(a => a.id == currentVal)) {
+    sel.value = currentVal;
+  }
   sel.dispatchEvent(new Event('change'));
 }
 
@@ -93,6 +99,7 @@ export async function makeReservation() {
   if (r.ok) {
     showToast('Reservation confirmed!', '✅');
     selectedSeat = null;
+    await loadLibraries();
     loadUserReservations();
     fetchTakenSeats();
   } else {
@@ -107,6 +114,7 @@ export async function cancelReservation(id) {
   if (!r) { showToast('Network error', '❌'); return; }
   if (r.ok) {
     showToast('Reservation cancelled', '✅');
+    await loadLibraries();
     loadUserReservations();
     fetchTakenSeats();
   } else {

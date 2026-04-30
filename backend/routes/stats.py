@@ -28,10 +28,16 @@ def get_overview():
     active_reservations = Reservation.query.filter_by(status="active").count()
     total_feedbacks = db.session.query(func.count(Feedback.id)).scalar() or 0
 
+    twenty_four_hours_ago = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=1)
+    recent_feedbacks = Feedback.query.filter(Feedback.created_at >= twenty_four_hours_ago).count()
+    recent_reservations = Reservation.query.filter(Reservation.created_at >= twenty_four_hours_ago).count()
+
     return jsonify({
         "current_occupants": int(current_occupants),
         "active_reservations": active_reservations,
         "total_feedbacks": total_feedbacks,
+        "recent_feedbacks": recent_feedbacks,
+        "recent_reservations": recent_reservations,
     })
 
 
@@ -178,5 +184,47 @@ def get_daily_usage():
 
     return jsonify({
         "daily_usage": list(result.values()),
+        "days_analyzed": days,
+    })
+
+
+@stats_bp.route("/daily-reservations", methods=["GET"])
+@admin_required
+def get_daily_reservations():
+    """
+    Günlük toplam rezervasyon sayılarını döndürür.
+    ---
+    tags:
+      - Statistics
+    security:
+      - Bearer: []
+    parameters:
+      - name: days
+        in: query
+        type: integer
+        required: false
+        description: Kaç günlük veri (varsayılan 7)
+    responses:
+      200:
+        description: Gün bazında rezervasyon istatistikleri
+      403:
+        description: Yönetici yetkisi gerekli
+    """
+    days = request.args.get("days", default=7, type=int)
+    since = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=days)
+
+    day_col = func.date(Reservation.created_at).label("day")
+
+    query = db.session.query(
+        day_col,
+        func.count(Reservation.id).label("count")
+    ).filter(Reservation.created_at >= since)
+
+    rows = query.group_by(day_col).order_by(day_col).all()
+
+    daily_data = [{"date": str(row.day), "count": row.count} for row in rows]
+
+    return jsonify({
+        "daily_reservations": daily_data,
         "days_analyzed": days,
     })

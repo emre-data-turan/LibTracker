@@ -147,10 +147,12 @@
         </select>
 
         <label>Current busyness</label>
-        <input type="range" id="fb-occupancy" min="0" max="100" value="50"
-          oninput="document.getElementById('fb-occ-val').textContent = this.value + '%'"
-          style="width:100%; margin-top:8px; accent-color:var(--accent);">
-        <div style="text-align:right; font-size:.8rem; color:var(--muted);" id="fb-occ-val">50%</div>
+        <select id="fb-occupancy" style="margin-top:8px;">
+          <option value="25">Quiet (Plenty of space)</option>
+          <option value="50" selected>Moderate (Some seats available)</option>
+          <option value="75">Busy (Few seats left)</option>
+          <option value="100">Full (No seats available)</option>
+        </select>
 
         <label>Comment (optional)</label>
         <textarea id="fb-comment" rows="3" placeholder="How's the study environment today?"></textarea>
