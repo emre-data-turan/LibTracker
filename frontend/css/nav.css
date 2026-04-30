@@ -1,0 +1,123 @@
+/* ── Navigation Bar ─────────────────────────────────────── */
+nav {
+  background: rgba(74, 59, 50, 0.96);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  padding: 0 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  border-bottom: 1px solid rgba(255, 255, 255, .08);
+  box-shadow: 0 4px 24px rgba(44, 36, 27, 0.25);
+}
+
+.nav-logo {
+  color: #fbf8f1;
+  font-size: 1.45rem;
+  font-weight: 700;
+  font-family: 'Lora', serif;
+  letter-spacing: -.3px;
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  transition: opacity .2s;
+}
+
+.nav-logo:hover { opacity: .85; }
+
+.nav-logo span {
+  color: var(--accent-lt);
+  font-weight: 400;
+  font-style: italic;
+}
+
+.nav-logo-dot {
+  width: 7px;
+  height: 7px;
+  background: var(--green);
+  border-radius: 50%;
+  margin-left: 4px;
+  animation: glow 2s ease-in-out infinite;
+}
+
+.nav-tabs {
+  display: flex;
+  gap: 2px;
+  align-items: center;
+}
+
+.nav-tab {
+  color: rgba(255, 255, 255, .55);
+  background: transparent;
+  border: none;
+  padding: 7px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: .875rem;
+  font-weight: 500;
+  transition: var(--transition);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  font-family: 'Inter', sans-serif;
+  letter-spacing: -.01em;
+}
+
+.nav-tab:hover {
+  background: rgba(255, 255, 255, .1);
+  color: #fff;
+}
+
+.nav-tab.active {
+  background: rgba(255, 255, 255, .15);
+  color: #fff;
+  font-weight: 600;
+}
+
+#authBtn {
+  margin-left: 12px;
+  border: 1px solid rgba(255, 255, 255, .2) !important;
+  background: rgba(255, 255, 255, .06) !important;
+  color: rgba(255, 255, 255, .8) !important;
+  border-radius: 8px !important;
+  padding: 7px 16px !important;
+}
+
+#authBtn:hover {
+  background: rgba(255, 255, 255, .14) !important;
+  color: #fff !important;
+}
+
+.nav-badge {
+  background: var(--red);
+  color: #fff;
+  font-size: .65rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 20px;
+  margin-left: 6px;
+  line-height: 1.4;
+}
+
+.back-link {
+  color: rgba(255, 255, 255, .7);
+  font-size: .875rem;
+  text-decoration: none;
+  border: 1px solid rgba(255, 255, 255, .2);
+  padding: 7px 16px;
+  border-radius: 8px;
+  transition: var(--transition);
+  font-weight: 500;
+  font-family: 'Inter', sans-serif;
+}
+
+.back-link:hover {
+  background: rgba(255, 255, 255, .1);
+  color: #fff;
+}

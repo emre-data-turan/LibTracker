@@ -66,6 +66,7 @@ class Library(db.Model):
             "is_open": self.is_open,
             "opening_time": self.opening_time.strftime("%H:%M") if self.opening_time else None,
             "closing_time": self.closing_time.strftime("%H:%M") if self.closing_time else None,
+            "study_areas": [a.to_dict() for a in self.study_areas] if self.study_areas else [],
         }
 
     def __repr__(self):
@@ -121,10 +122,10 @@ class Reservation(db.Model):
             "user_id": self.user_id,
             "study_area_id": self.study_area_id,
             "seat_number": self.seat_number,
-            "start_time": self.start_time.isoformat(),
-            "end_time": self.end_time.isoformat(),
+            "start_time": self.start_time.isoformat() + "Z" if self.start_time else None,
+            "end_time": self.end_time.isoformat() + "Z" if self.end_time else None,
             "status": self.status,
-            "created_at": self.created_at.isoformat(),
+            "created_at": self.created_at.isoformat() + "Z" if self.created_at and self.created_at.tzinfo is None else (self.created_at.isoformat() if self.created_at else None),
         }
 
     def __repr__(self):

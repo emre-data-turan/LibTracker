@@ -5,6 +5,7 @@ from flasgger import Swagger
 from dotenv import load_dotenv
 import os
 import atexit
+import warnings
 from datetime import datetime, timezone, timedelta
 
 load_dotenv()
@@ -50,9 +51,24 @@ def _complete_expired_reservations(app):
 
 def create_app(config=None):
     app = Flask(__name__)
+    app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 
-    app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "dev-secret-key")
-    app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY", "dev-jwt-secret")
+    secret_key = os.getenv("SECRET_KEY")
+    jwt_secret = os.getenv("JWT_SECRET_KEY")
+
+    if not secret_key or not jwt_secret:
+        if not config or not config.get("TESTING"):
+            warnings.warn(
+                "SECRET_KEY and JWT_SECRET_KEY are not set! "
+                "Using insecure defaults. Set them in .env for production.",
+                RuntimeWarning,
+                stacklevel=2,
+            )
+        secret_key = secret_key or "dev-secret-key"
+        jwt_secret = jwt_secret or "dev-jwt-secret"
+
+    app.config["SECRET_KEY"] = secret_key
+    app.config["JWT_SECRET_KEY"] = jwt_secret
     app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv(
         "DATABASE_URL", "sqlite:///libtracker.db"
     )
@@ -62,7 +78,13 @@ def create_app(config=None):
     if config:
         app.config.update(config)
 
-    CORS(app)
+    CORS(app, origins=[
+        "http://localhost:5000",
+        "http://127.0.0.1:5000",
+        "http://localhost:5500",
+        "http://127.0.0.1:5500",
+        "http://localhost:3000",
+    ])
     jwt = JWTManager(app)
 
     Swagger(app, template={
@@ -100,6 +122,38 @@ def create_app(config=None):
     app.register_blueprint(reservations_bp, url_prefix="/reservations")
     app.register_blueprint(feedback_bp, url_prefix="/feedback")
     app.register_blueprint(stats_bp, url_prefix="/stats")
+
+    @app.before_request
+    def clean_expired_reservations_hook():
+        _complete_expired_reservations(app)
+
+    @app.after_request
+    def add_header(response):
+        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0, max-age=0'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '-1'
+        return response
+
+    # ── Serve frontend static files ────────────────────────
+    frontend_dir = os.path.join(os.path.dirname(__file__), "..", "frontend")
+    frontend_dir = os.path.abspath(frontend_dir)
+
+    @app.route("/")
+    def serve_index():
+        from flask import send_from_directory
+        return send_from_directory(frontend_dir, "index.html")
+
+    @app.route("/<path:filename>")
+    def serve_frontend(filename):
+        from flask import send_from_directory
+        from flask import abort
+        filepath = os.path.abspath(os.path.join(frontend_dir, filename))
+        if os.path.commonpath([frontend_dir, filepath]) != frontend_dir:
+            abort(404)
+        if os.path.isfile(filepath):
+            return send_from_directory(frontend_dir, filename)
+        # Fall through to 404 for unknown paths
+        abort(404)
 
     with app.app_context():
         from database import db

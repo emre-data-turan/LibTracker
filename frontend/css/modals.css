@@ -1,0 +1,83 @@
+/* ── Modal Overlay (shared) ─────────────────────────────── */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(17, 24, 39, .6);
+  backdrop-filter: blur(8px);
+  z-index: 9998;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-overlay.active { display: flex; }
+
+.modal-box {
+  background: #fff;
+  border-radius: 24px;
+  width: 400px;
+  overflow: hidden;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, .22);
+  animation: fadeUp .25s ease;
+}
+
+/* ── Auth Modal Header ─────────────────────────────────── */
+.modal-header-auth {
+  background: linear-gradient(135deg, #1e2875, #4361ee);
+  padding: 2rem 2rem 1.5rem;
+  text-align: center;
+}
+
+.modal-header-admin {
+  background: linear-gradient(135deg, #ef4444, #b91c1c);
+  padding: 2rem 2rem 1.5rem;
+  text-align: center;
+}
+
+.modal-body { padding: 1.75rem 2rem 2rem; }
+
+/* ── Tab Switch ────────────────────────────────────────── */
+.modal-tab-group {
+  display: flex;
+  background: #f5f6fa;
+  border-radius: 10px;
+  padding: 3px;
+  margin-bottom: 1.5rem;
+}
+
+.modal-tab-btn {
+  flex: 1;
+  padding: 8px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: .85rem;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  transition: all .2s;
+  background: transparent;
+  color: var(--muted);
+}
+
+.modal-tab-btn.active {
+  background: white;
+  color: var(--primary);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, .1);
+}
+
+/* ── Profile Modal ─────────────────────────────────────── */
+.profile-modal-box {
+  background: #fff;
+  border-radius: 16px;
+  padding: 2rem;
+  width: 400px;
+  box-shadow: var(--shadow-lg);
+}
+
+/* ── Create Library Modal ──────────────────────────────── */
+.create-lib-modal-box {
+  background: #fff;
+  border-radius: 16px;
+  padding: 2rem;
+  width: 400px;
+}
