@@ -97,6 +97,11 @@ def create_reservation():
 
     area = db.get_or_404(StudyArea, study_area_id, description="Study area not found")
 
+    # Check if library is open
+    library = db.session.get(Library, area.library_id)
+    if library and not library.is_open:
+        return jsonify({"error": "This library is currently closed"}), 400
+
     if seat_number < 1 or seat_number > area.total_seats:
         return jsonify({"error": f"Seat number must be between 1 and {area.total_seats}"}), 400
 
@@ -117,7 +122,8 @@ def create_reservation():
 
     library = db.session.get(Library, area.library_id)
     if library:
-        library.current_occupancy = sum(a.total_seats - a.available_seats for a in library.study_areas)
+        raw_occupancy = sum(a.total_seats - a.available_seats for a in library.study_areas)
+        library.current_occupancy = min(raw_occupancy, library.total_capacity)
 
     db.session.commit()
     return jsonify({"message": "Reservation created", "reservation": reservation.to_dict()}), 201
@@ -199,7 +205,8 @@ def cancel_reservation(reservation_id):
 
         library = db.session.get(Library, area.library_id)
         if library:
-            library.current_occupancy = sum(a.total_seats - a.available_seats for a in library.study_areas)
+            raw_occupancy = sum(a.total_seats - a.available_seats for a in library.study_areas)
+            library.current_occupancy = min(raw_occupancy, library.total_capacity)
 
     db.session.commit()
     return jsonify({"message": "Reservation cancelled"})

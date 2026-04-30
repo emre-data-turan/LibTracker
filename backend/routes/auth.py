@@ -1,4 +1,5 @@
 from flask import Blueprint, jsonify, request
+from sqlalchemy import distinct
 from flask_jwt_extended import (
     create_access_token,
     jwt_required,
@@ -6,7 +7,7 @@ from flask_jwt_extended import (
     get_jwt_identity,
 )
 from werkzeug.security import generate_password_hash, check_password_hash
-from models import User, Reservation, Feedback, TokenBlocklist
+from models import User, Reservation, Feedback, TokenBlocklist, StudyArea, Library
 from database import db
 import re
 
@@ -208,17 +209,45 @@ def delete_account():
     user_id = int(get_jwt_identity())
     user = db.get_or_404(User, user_id)
 
+    # Find affected study areas BEFORE deleting reservations
+    affected_area_ids = [
+        row[0] for row in db.session.query(
+            distinct(Reservation.study_area_id)
+        ).filter(
+            Reservation.user_id == user.id,
+            Reservation.status == "active"
+        ).all()
+    ]
+
     # Cascade deletes
     Reservation.query.filter_by(user_id=user.id).delete()
     Feedback.query.filter_by(user_id=user.id).delete()
-    
+
+    # Recalculate occupancy for affected areas and libraries
+    affected_library_ids = set()
+    for area_id in affected_area_ids:
+        area = db.session.get(StudyArea, area_id)
+        if area:
+            active_count = Reservation.query.filter_by(
+                study_area_id=area_id, status="active"
+            ).count()
+            area.available_seats = max(0, area.total_seats - active_count)
+            affected_library_ids.add(area.library_id)
+
+    for lib_id in affected_library_ids:
+        library = db.session.get(Library, lib_id)
+        if library:
+            library.current_occupancy = sum(
+                a.total_seats - a.available_seats for a in library.study_areas
+            )
+
     db.session.delete(user)
     db.session.commit()
-    
+
     jti = get_jwt()["jti"]
     db.session.add(TokenBlocklist(jti=jti))
     db.session.commit()
-    
+
     return jsonify({"message": "Hesap ve ilişkili tüm veriler başarıyla silindi"})
 
 

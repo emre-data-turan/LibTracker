@@ -1,3 +1,4 @@
+import os
 import threading
 from flask_sqlalchemy import SQLAlchemy
 
@@ -59,13 +60,15 @@ class SystemDatabase:
 
         with self._app.app_context():
             # Seed Admin User
+            # WARNING: Change these credentials immediately in production!
             admin_email = "admin@libtracker.edu"
+            admin_password = os.environ.get("ADMIN_DEFAULT_PASSWORD", "LibTracker@Admin2026!")
             admin_user = User.query.filter_by(email=admin_email).first()
             if not admin_user:
                 admin_user = User(
                     name="admin",
                     email=admin_email,
-                    password_hash=generate_password_hash("admin"),
+                    password_hash=generate_password_hash(admin_password),
                     is_admin=True,
                     is_verified=True
                 )

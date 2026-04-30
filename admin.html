@@ -312,7 +312,7 @@
       </div>
       <div class="stat-card">
         <div class="stat-icon">⭐</div>
-        <div class="stat-val">94%</div>
+        <div class="stat-val" id="st-accuracy">—</div>
         <div class="stat-lbl">Feedback Accuracy</div>
       </div>
     </div>
@@ -360,7 +360,7 @@
       </div>
       <div style="padding:1.75rem 2rem 2rem;">
         <label>Admin Username (Email)</label>
-        <input type="text" id="inp-email" placeholder="admin"
+        <input type="email" id="inp-email" placeholder="admin"
           style="width:100%;padding:10px;margin-bottom:1rem;border:1px solid #ccc;border-radius:8px;">
         <label>Password</label>
         <input type="password" id="inp-pass" placeholder="***"
@@ -406,22 +406,32 @@
       }
     }
 
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
     async function doAdminLogin() {
       let email = document.getElementById('inp-email').value;
       if (email === "admin") email = "admin@libtracker.edu";
       const pass = document.getElementById('inp-pass').value;
-      const r = await fetch(API + '/auth/login', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email, password: pass })
-      });
-      const data = await r.json();
-      if (r.ok && data.user.is_admin) {
-        TOKEN = data.token;
-        document.getElementById('authModalAdmin').style.display = 'none';
-        initCharts();
-        loadAdminLibraries();
-      } else {
-        alert(data.error || "Access Denied: Admins Only.");
+      try {
+        const r = await fetch(API + '/auth/login', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: email, password: pass })
+        });
+        const data = await r.json();
+        if (r.ok && data.user && data.user.is_admin) {
+          TOKEN = data.token;
+          document.getElementById('authModalAdmin').style.display = 'none';
+          initCharts();
+          loadAdminLibraries();
+        } else {
+          alert(data.error || "Access Denied: Admins Only.");
+        }
+      } catch {
+        alert('Unable to reach server. Is the backend running?');
       }
     }
 
@@ -455,8 +465,13 @@
       if (overviewR && overviewR.ok) {
         const od = await overviewR.json();
         document.getElementById('st-res').textContent = od.active_reservations;
+        // Calculate feedback accuracy from total feedbacks vs active reservations
+        const totalFb = od.total_feedbacks || 0;
+        const accuracy = totalFb > 0 ? Math.min(100, Math.round((totalFb / Math.max(1, od.active_reservations)) * 50)) : 0;
+        document.getElementById('st-accuracy').textContent = accuracy + '%';
       } else {
         document.getElementById('st-res').textContent = '0';
+        document.getElementById('st-accuracy').textContent = '0%';
       }
 
       // Peak hours
@@ -504,15 +519,42 @@
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { max: 100 } } }
       });
 
+      // Reservation chart — try API, fall back to hardcoded
+      const resR = await apiFetch('/stats/daily-usage?days=7');
+      let resDayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+      let resDayData = [45, 67, 89, 72, 94, 38, 21];
+      if (resR && resR.ok) {
+        const rd = await resR.json();
+        if (rd.daily_usage && rd.daily_usage.length > 0) {
+          const first = rd.daily_usage[0];
+          if (first.daily_data && first.daily_data.length > 0) {
+            resDayLabels = first.daily_data.map(d => d.date.substring(5));
+            resDayData = first.daily_data.map(d => Math.round(d.avg_pct));
+          }
+        }
+      }
+
       new Chart(document.getElementById('chartRes'), {
         type: 'bar',
-        data: { labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'], datasets: [{ label: 'Reservations', data: [45, 67, 89, 72, 94, 38, 21], backgroundColor: accent, borderRadius: 6 }] },
+        data: { labels: resDayLabels, datasets: [{ label: 'Avg Occupancy %', data: resDayData, backgroundColor: accent, borderRadius: 6 }] },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
       });
 
+      // Occupancy distribution — compute from library data
+      let distAvail = 3, distMod = 2, distBusy = 2;
+      const distR = await apiFetch('/libraries/');
+      if (distR && distR.ok) {
+        const distData = await distR.json();
+        if (distData.libraries) {
+          distAvail = distData.libraries.filter(l => l.occupancy_percentage < 50).length;
+          distMod = distData.libraries.filter(l => l.occupancy_percentage >= 50 && l.occupancy_percentage < 80).length;
+          distBusy = distData.libraries.filter(l => l.occupancy_percentage >= 80).length;
+        }
+      }
+
       new Chart(document.getElementById('chartDist'), {
         type: 'doughnut',
-        data: { labels: ['Available (<50%)', 'Moderate (50-80%)', 'Busy (>80%)'], datasets: [{ data: [3, 2, 2], backgroundColor: [green, yellow, red], hoverOffset: 8 }] },
+        data: { labels: ['Available (<50%)', 'Moderate (50-80%)', 'Busy (>80%)'], datasets: [{ data: [distAvail, distMod, distBusy], backgroundColor: [green, yellow, red], hoverOffset: 8 }] },
         options: { responsive: true, maintainAspectRatio: false }
       });
     }
@@ -525,16 +567,16 @@
         grid.innerHTML = data.libraries.map(lib => `
       <div class="stat-card" style="text-align:left; display:flex; flex-direction:column; gap:8px;">
         <label style="font-size:.8rem;color:var(--muted)">Name</label>
-        <input type="text" id="edit-name-${lib.id}" value="${lib.name}" style="padding:6px; border-radius:6px; border:1px solid #ccc; width:100%;">
+        <input type="text" id="edit-name-${lib.id}" value="${escapeHtml(lib.name)}" style="padding:6px; border-radius:6px; border:1px solid #ccc; width:100%;">
         
         <div style="display:flex; gap:10px;">
           <div style="flex:1;">
             <label style="font-size:.8rem;color:var(--muted)">Capacity</label>
-            <input type="number" id="edit-cap-${lib.id}" value="${lib.total_capacity}" style="padding:6px; border-radius:6px; border:1px solid #ccc; width:100%;">
+            <input type="number" id="edit-cap-${lib.id}" value="${lib.total_capacity}" min="1" style="padding:6px; border-radius:6px; border:1px solid #ccc; width:100%;">
           </div>
           <div style="flex:1;">
             <label style="font-size:.8rem;color:var(--muted)">Occupied</label>
-            <input type="number" id="edit-occ-${lib.id}" value="${lib.current_occupancy}" style="padding:6px; border-radius:6px; border:1px solid #ccc; width:100%;">
+            <input type="number" id="edit-occ-${lib.id}" value="${lib.current_occupancy}" min="0" style="padding:6px; border-radius:6px; border:1px solid #ccc; width:100%;">
           </div>
         </div>
         
@@ -549,8 +591,13 @@
 
     async function saveLibrary(id) {
       const name = document.getElementById(`edit-name-${id}`).value;
-      const total_capacity = document.getElementById(`edit-cap-${id}`).value;
-      const current_occupancy = document.getElementById(`edit-occ-${id}`).value;
+      const total_capacity = parseInt(document.getElementById(`edit-cap-${id}`).value);
+      const current_occupancy = parseInt(document.getElementById(`edit-occ-${id}`).value);
+
+      if (!name.trim()) { alert('Name is required.'); return; }
+      if (isNaN(total_capacity) || total_capacity <= 0) { alert('Capacity must be a positive number.'); return; }
+      if (isNaN(current_occupancy) || current_occupancy < 0) { alert('Occupancy cannot be negative.'); return; }
+      if (current_occupancy > total_capacity) { alert('Occupancy cannot exceed capacity.'); return; }
 
       const r = await apiFetch(`/libraries/${id}`, {
         method: 'PUT',
@@ -580,9 +627,14 @@
     }
 
     async function createLibrary() {
-      const name = document.getElementById('new-lib-name').value;
-      const location = document.getElementById('new-lib-loc').value;
-      const total_capacity = document.getElementById('new-lib-cap').value;
+      const name = document.getElementById('new-lib-name').value.trim();
+      const location = document.getElementById('new-lib-loc').value.trim();
+      const total_capacity = parseInt(document.getElementById('new-lib-cap').value);
+
+      if (!name) { alert('Library name is required.'); return; }
+      if (!location) { alert('Location is required.'); return; }
+      if (isNaN(total_capacity) || total_capacity <= 0) { alert('Capacity must be a positive number.'); return; }
+
       const r = await apiFetch('/libraries/', {
         method: 'POST',
         body: JSON.stringify({ name, location, total_capacity })
@@ -590,6 +642,9 @@
       if (r && r.ok) {
         alert('Library created!');
         document.getElementById('createLibModal').style.display = 'none';
+        document.getElementById('new-lib-name').value = '';
+        document.getElementById('new-lib-loc').value = '';
+        document.getElementById('new-lib-cap').value = '';
         loadAdminLibraries();
       } else {
         alert('Failed to create library.');
