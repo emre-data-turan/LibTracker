@@ -146,11 +146,13 @@ def create_app(config=None):
     @app.route("/<path:filename>")
     def serve_frontend(filename):
         from flask import send_from_directory
-        filepath = os.path.join(frontend_dir, filename)
+        from flask import abort
+        filepath = os.path.abspath(os.path.join(frontend_dir, filename))
+        if os.path.commonpath([frontend_dir, filepath]) != frontend_dir:
+            abort(404)
         if os.path.isfile(filepath):
             return send_from_directory(frontend_dir, filename)
         # Fall through to 404 for unknown paths
-        from flask import abort
         abort(404)
 
     with app.app_context():
