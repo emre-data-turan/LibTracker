@@ -2,7 +2,7 @@
 
 A web application that tracks, manages, and displays the **real-time occupancy levels** of university libraries and study areas.
 
-**Team:** Rebs Dev &nbsp;|&nbsp; **Week:** 9–14 &nbsp;|&nbsp; **April–June 2026**
+**Team:** Rebs Dev
 
 ---
 
@@ -49,7 +49,7 @@ Swagger UI: `http://localhost:5000/apidocs`
 
 ```bash
 # Open in browser
-open demo.html   # or drag and drop the file directly into the browser
+open index.html   # or drag and drop the file directly into the browser
 ```
 
 ---
@@ -62,6 +62,9 @@ open demo.html   # or drag and drop the file directly into the browser
 |--------|----------|----------|
 | GET | `/libraries/` | All libraries + real-time occupancy |
 | GET | `/libraries/<id>/occupancy` | Single library occupancy details |
+| POST | `/libraries/` | Create new library (Admin) |
+| PUT | `/libraries/<id>` | Update library details (Admin) |
+| DELETE | `/libraries/<id>` | Delete library (Admin) |
 
 ### Auth
 
@@ -71,6 +74,8 @@ open demo.html   # or drag and drop the file directly into the browser
 | POST | `/auth/login` | Login → JWT token |
 | POST | `/auth/logout` | Logout (revoke token) |
 | GET | `/auth/me` | Current user info |
+| PUT | `/auth/me/password` | Update user password |
+| DELETE | `/auth/me` | Delete user account and related data |
 
 ### Reservations
 
@@ -79,6 +84,7 @@ open demo.html   # or drag and drop the file directly into the browser
 | POST | `/reservations/` | New reservation |
 | GET | `/reservations/user/<userId>` | User's reservations |
 | DELETE | `/reservations/<id>` | Cancel reservation |
+| GET | `/reservations/area/<area_id>/seats` | Get taken seats for an area |
 
 ### Feedback
 
@@ -91,8 +97,10 @@ open demo.html   # or drag and drop the file directly into the browser
 
 | Method | Endpoint | Description |
 |--------|----------|----------|
+| GET | `/stats/overview` | Dashboard overview statistics |
 | GET | `/stats/peak-hours` | Peak occupancy by hour |
 | GET | `/stats/daily-usage` | Daily average usage |
+| GET | `/stats/daily-reservations` | Daily reservations count |
 
 ---
 
@@ -101,23 +109,32 @@ open demo.html   # or drag and drop the file directly into the browser
 ```
 LibTracker/
 ├── backend/
+│   ├── __init__.py
 │   ├── app.py              # Flask app factory
-│   ├── models.py           # SQLAlchemy models
 │   ├── database.py         # Singleton SystemDatabase
+│   ├── models.py           # SQLAlchemy models
 │   ├── routes/
+│   │   ├── __init__.py
 │   │   ├── auth.py         # JWT auth
+│   │   ├── feedback.py     # Feedback API
 │   │   ├── libraries.py    # Occupancy API
 │   │   ├── reservations.py # Reservation API
-│   │   ├── feedback.py     # Feedback API
-│   │   └── stats.py        # Admin stats API
+│   │   ├── stats.py        # Admin stats API
+│   │   └── utils.py        # Route utilities
+│   ├── .env
+│   ├── .env.example
 │   └── requirements.txt
 ├── frontend/
-│   └── demo.html
+│   ├── admin.html          # Admin dashboard
+│   ├── index.html          # Main application page
+│   ├── css/                # Stylesheets
+│   └── js/                 # Client-side scripts
 ├── tests/
+│   ├── __init__.py
 │   ├── conftest.py
-│   ├── test_auth.py        # 10 auth tests
-│   ├── test_reservations.py# 11 reservation tests
-│   └── test_feedback.py    # 7 feedback tests
+│   ├── test_auth.py        # 11 auth tests
+│   ├── test_feedback.py    # 7 feedback tests
+│   └── test_reservations.py# 12 reservation tests
 ├── .github/
 │   └── workflows/
 │       └── ci.yml          # GitHub Actions CI
@@ -161,7 +178,7 @@ pytest tests/ -v
 | Sirac Ketenoglu | Backend Lead | `feature/backend-core` |
 | Emre Turan | Auth & Feedback | `feature/auth-and-feedback` |
 | Reis Yıldız | Frontend Lead | `feature/frontend-integration` |
-| Barış Küçükkıya | Test & Reservation | `feature/reservation-and-tests` |
+| Barış Küçükkaya | Test & Reservation | `feature/reservation-and-tests` |
 
 ---
 
