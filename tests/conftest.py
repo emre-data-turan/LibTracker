@@ -62,6 +62,30 @@ def registered_user(client):
 
 
 @pytest.fixture(scope="function")
+def admin_headers(app, client):
+    """Admin kullanıcısının Authorization header'ı."""
+    with app.app_context():
+        from database import db
+        from models import User
+        from werkzeug.security import generate_password_hash
+        admin = User(
+            name="Admin",
+            email="admin@university.edu.tr",
+            password_hash=generate_password_hash("adminpass123"),
+            is_verified=True,
+            is_admin=True,
+        )
+        db.session.add(admin)
+        db.session.commit()
+    resp = client.post("/auth/login", json={
+        "email": "admin@university.edu.tr",
+        "password": "adminpass123",
+    })
+    token = resp.get_json()["token"]
+    return {"Authorization": f"Bearer {token}"}
+
+
+@pytest.fixture(scope="function")
 def sample_library(app):
     """Test için örnek kütüphane oluşturur."""
     with app.app_context():
