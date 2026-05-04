@@ -17,6 +17,12 @@ A web application that tracks, manages, and displays the **real-time occupancy l
 
 ---
 
+## Live Deployment
+The application is successfully deployed and can be accessed at: 
+**(https://libtracker.onrender.com/)**
+
+---
+
 ## Quick Start
 
 ### Requirements
