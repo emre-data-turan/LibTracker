@@ -159,6 +159,7 @@ def create_app(config=None):
         from database import db
         import models  # noqa: F401 — modelleri SQLAlchemy'e kaydet
         db.create_all()
+        system_db.seed()
 
     # Scheduler'ı test ortamında başlatma — her test çalıştırmasında sızdırır
     if not app.config.get("TESTING"):
