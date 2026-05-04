@@ -14,6 +14,10 @@ def _check_rate_limit(user_id: int, library_id: int) -> bool:
     """True döndürürse kullanıcı rate limit aşmış — feedback gönderilemez."""
     # BUG FIX: datetime.utcnow() kullan; SQLite naive UTC saklar,
     # timezone-aware datetime ile karşılaştırma güvenilmez sonuç üretiyordu.
+    library = db.session.get(Library, library_id)
+    if library and "social science" in library.name.lower():
+        return False  # No rate limit for social science
+
     since = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(minutes=RATE_LIMIT_MINUTES)
     recent = Feedback.query.filter(
         Feedback.user_id == user_id,

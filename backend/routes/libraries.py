@@ -56,10 +56,19 @@ def get_libraries():
 
     busy_library_ids = {lib_id for lib_id, count in busy_feedbacks if count >= 3}
 
+    recent_all_feedbacks = db.session.query(
+        Feedback.library_id, db.func.count(Feedback.id)
+    ).filter(
+        Feedback.created_at >= two_hours_ago
+    ).group_by(Feedback.library_id).all()
+
+    conflict_library_ids = {lib_id for lib_id, count in recent_all_feedbacks if count > 3}
+
     libs_data = []
     for l in libs:
         d = l.to_dict()
         d["is_busy_notice"] = l.id in busy_library_ids
+        d["social_science_warning"] = bool("social science" in l.name.lower() and l.id in conflict_library_ids)
         libs_data.append(d)
 
     return jsonify({
