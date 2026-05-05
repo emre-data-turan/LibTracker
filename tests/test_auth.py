@@ -128,3 +128,112 @@ def test_me_returns_user_info(client, auth_headers):
     data = resp.get_json()
     assert "user" in data
     assert "email" in data["user"]
+
+
+# ── PUT /auth/me/password ─────────────────────────────────────────────────────
+
+def test_update_password_success(client, auth_headers):
+    """Doğru eski şifreyle yeni şifre başarıyla güncellenmeli."""
+    resp = client.put("/auth/me/password", json={
+        "old_password": "password123",
+        "new_password": "newpassword456",
+    }, headers=auth_headers)
+    assert resp.status_code == 200
+    assert "güncellendi" in resp.get_json()["message"]
+
+
+def test_update_password_wrong_old_password(client, auth_headers):
+    """Yanlış eski şifre 401 döndürmeli."""
+    resp = client.put("/auth/me/password", json={
+        "old_password": "wrongpassword",
+        "new_password": "newpassword456",
+    }, headers=auth_headers)
+    assert resp.status_code == 401
+    assert "hatalı" in resp.get_json()["error"]
+
+
+def test_update_password_short_new_password(client, auth_headers):
+    """6 karakterden kısa yeni şifre 400 döndürmeli."""
+    resp = client.put("/auth/me/password", json={
+        "old_password": "password123",
+        "new_password": "123",
+    }, headers=auth_headers)
+    assert resp.status_code == 400
+
+
+def test_update_password_missing_fields(client, auth_headers):
+    """Eksik alan 400 döndürmeli."""
+    resp = client.put("/auth/me/password", json={
+        "old_password": "password123",
+    }, headers=auth_headers)
+    assert resp.status_code == 400
+
+
+def test_update_password_requires_auth(client):
+    """Token olmadan şifre güncellenemez."""
+    resp = client.put("/auth/me/password", json={
+        "old_password": "pass",
+        "new_password": "newpass123",
+    })
+    assert resp.status_code == 401
+
+
+# ── DELETE /auth/me ───────────────────────────────────────────────────────────
+
+def test_delete_account_success(client):
+    """Kullanıcı kendi hesabını silebilmeli."""
+    client.post("/auth/register", json={
+        "name": "Silinecek",
+        "email": "delete@uni.edu.tr",
+        "password": "pass123",
+    })
+    login = client.post("/auth/login", json={
+        "email": "delete@uni.edu.tr",
+        "password": "pass123",
+    })
+    token = login.get_json()["token"]
+    headers = {"Authorization": f"Bearer {token}"}
+
+    resp = client.delete("/auth/me", headers=headers)
+    assert resp.status_code == 200
+    assert "silindi" in resp.get_json()["message"]
+
+    # Token artık geçersiz olmalı (blocklist'e eklendi)
+    me = client.get("/auth/me", headers=headers)
+    assert me.status_code == 401
+
+
+def test_delete_account_with_active_reservation(client, sample_library):
+    """Aktif rezervasyonu olan hesap silindiğinde koltuk müsaitliği güncellenmeli."""
+    from datetime import datetime, timezone, timedelta
+
+    client.post("/auth/register", json={
+        "name": "Rezervasyonlu",
+        "email": "withres@uni.edu.tr",
+        "password": "pass123",
+    })
+    login = client.post("/auth/login", json={
+        "email": "withres@uni.edu.tr",
+        "password": "pass123",
+    })
+    token = login.get_json()["token"]
+    headers = {"Authorization": f"Bearer {token}"}
+
+    future = (datetime.now(timezone.utc) + timedelta(days=1)).replace(
+        hour=10, minute=0, second=0, microsecond=0
+    )
+    client.post("/reservations/", json={
+        "study_area_id": sample_library["study_area_id"],
+        "seat_number": 1,
+        "start_time": future.isoformat(),
+        "end_time": (future + timedelta(hours=2)).isoformat(),
+    }, headers=headers)
+
+    resp = client.delete("/auth/me", headers=headers)
+    assert resp.status_code == 200
+
+
+def test_delete_account_requires_auth(client):
+    """Token olmadan hesap silinemez."""
+    resp = client.delete("/auth/me")
+    assert resp.status_code == 401
