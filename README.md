@@ -17,6 +17,12 @@ A web application that tracks, manages, and displays the **real-time occupancy l
 
 ---
 
+## Live Deployment
+The application is successfully deployed and can be accessed at:
+**(https://libtracker.onrender.com/)**
+
+---
+
 ## Quick Start
 
 ### Requirements
@@ -61,9 +67,9 @@ Admin panel: `frontend/admin.html`
 |--------|----------|----------|
 | GET | `/libraries/` | All libraries + real-time occupancy |
 | GET | `/libraries/<id>/occupancy` | Single library occupancy details |
-| POST | `/libraries/` | Add a new library |
-| PUT | `/libraries/<id>` | Update library details |
-| DELETE | `/libraries/<id>` | Delete a library |
+| POST | `/libraries/` | Create new library (Admin) |
+| PUT | `/libraries/<id>` | Update library details (Admin) |
+| DELETE | `/libraries/<id>` | Delete library (Admin) |
 
 ### Auth
 
@@ -73,8 +79,8 @@ Admin panel: `frontend/admin.html`
 | POST | `/auth/login` | Login → JWT token |
 | POST | `/auth/logout` | Logout (revoke token) |
 | GET | `/auth/me` | Current user info |
-| PUT | `/auth/me/password` | Change password |
-| DELETE | `/auth/me` | Delete account |
+| PUT | `/auth/me/password` | Update user password |
+| DELETE | `/auth/me` | Delete user account and related data |
 
 ### Reservations
 
@@ -83,7 +89,7 @@ Admin panel: `frontend/admin.html`
 | POST | `/reservations/` | New reservation |
 | GET | `/reservations/user/<userId>` | User's reservations |
 | DELETE | `/reservations/<id>` | Cancel reservation |
-| GET | `/reservations/area/<areaId>/seats` | Available seats in a study area |
+| GET | `/reservations/area/<area_id>/seats` | Get taken seats for an area |
 
 ### Feedback
 
@@ -96,10 +102,10 @@ Admin panel: `frontend/admin.html`
 
 | Method | Endpoint | Description |
 |--------|----------|----------|
-| GET | `/stats/overview` | Overall system statistics |
+| GET | `/stats/overview` | Dashboard overview statistics |
 | GET | `/stats/peak-hours` | Peak occupancy by hour |
 | GET | `/stats/daily-usage` | Daily average usage |
-| GET | `/stats/daily-reservations` | Daily reservation counts |
+| GET | `/stats/daily-reservations` | Daily reservations count |
 
 ---
 
@@ -108,23 +114,26 @@ Admin panel: `frontend/admin.html`
 ```
 LibTracker/
 ├── backend/
+│   ├── __init__.py
 │   ├── app.py              # Flask app factory
-│   ├── models.py           # SQLAlchemy models
 │   ├── database.py         # Singleton SystemDatabase
+│   ├── models.py           # SQLAlchemy models
 │   ├── routes/
+│   │   ├── __init__.py
 │   │   ├── auth.py         # JWT auth
+│   │   ├── feedback.py     # Feedback API
 │   │   ├── libraries.py    # Occupancy API
 │   │   ├── reservations.py # Reservation API
-│   │   ├── feedback.py     # Feedback API
 │   │   ├── stats.py        # Admin stats API
 │   │   └── utils.py        # Shared route utilities
 │   └── requirements.txt
 ├── frontend/
-│   ├── index.html          # Main user interface
+│   ├── index.html          # Main application page
 │   ├── admin.html          # Admin dashboard
-│   ├── css/
-│   └── js/
+│   ├── css/                # Stylesheets
+│   └── js/                 # Client-side scripts
 ├── tests/
+│   ├── __init__.py
 │   ├── conftest.py
 │   ├── test_auth.py        # 19 auth tests
 │   ├── test_reservations.py# 21 reservation tests
