@@ -2,7 +2,7 @@
 
 A web application that tracks, manages, and displays the **real-time occupancy levels** of university libraries and study areas.
 
-**Team:** Rebs Dev
+**Team:** Rebs Dev &nbsp;|&nbsp; **Week:** 9–14 &nbsp;|&nbsp; **April–June 2026**
 
 ---
 
@@ -18,7 +18,7 @@ A web application that tracks, manages, and displays the **real-time occupancy l
 ---
 
 ## Live Deployment
-The application is successfully deployed and can be accessed at: 
+The application is successfully deployed and can be accessed at:
 **(https://libtracker.onrender.com/)**
 
 ---
@@ -40,9 +40,6 @@ cd LibTracker
 # Install dependencies
 pip install -r backend/requirements.txt
 
-# Set up environment variables
-cp backend/.env.example backend/.env
-
 # Start the application (with seed data)
 cd backend
 python app.py
@@ -55,8 +52,10 @@ Swagger UI: `http://localhost:5000/apidocs`
 
 ```bash
 # Open in browser
-open index.html   # or drag and drop the file directly into the browser
+open frontend/index.html   # or drag and drop the file directly into the browser
 ```
+
+Admin panel: `frontend/admin.html`
 
 ---
 
@@ -126,21 +125,22 @@ LibTracker/
 │   │   ├── libraries.py    # Occupancy API
 │   │   ├── reservations.py # Reservation API
 │   │   ├── stats.py        # Admin stats API
-│   │   └── utils.py        # Route utilities
-│   ├── .env
-│   ├── .env.example
+│   │   └── utils.py        # Shared route utilities
 │   └── requirements.txt
 ├── frontend/
-│   ├── admin.html          # Admin dashboard
 │   ├── index.html          # Main application page
+│   ├── admin.html          # Admin dashboard
 │   ├── css/                # Stylesheets
 │   └── js/                 # Client-side scripts
 ├── tests/
 │   ├── __init__.py
 │   ├── conftest.py
-│   ├── test_auth.py        # 11 auth tests
+│   ├── test_auth.py        # 19 auth tests
+│   ├── test_reservations.py# 21 reservation tests
 │   ├── test_feedback.py    # 7 feedback tests
-│   └── test_reservations.py# 12 reservation tests
+│   ├── test_libraries.py   # 17 library tests
+│   ├── test_stats.py       # 12 stats tests
+│   └── test_app_coverage.py# 9 coverage tests
 ├── .github/
 │   └── workflows/
 │       └── ci.yml          # GitHub Actions CI
@@ -190,4 +190,3 @@ pytest tests/ -v
 
 > **Note:** Since there is no real library sensor data, the system uses seed data and simulation.
 > This is normal and acceptable — it will be mentioned as "future work" in the final report.
-
