@@ -151,6 +151,154 @@ def test_cancel_nonexistent_reservation(client, auth_headers):
     assert resp.status_code == 404
 
 
+def test_create_reservation_missing_fields(client, auth_headers):
+    """Eksik alan içeren rezervasyon isteği 400 döndürmeli."""
+    resp = client.post("/reservations/", json={
+        "study_area_id": 1,
+        "seat_number": 1,
+        # start_time ve end_time eksik
+    }, headers=auth_headers)
+    assert resp.status_code == 400
+
+
+def test_create_reservation_invalid_date_format(client, auth_headers, sample_library):
+    """Geçersiz tarih formatı 400 döndürmeli."""
+    resp = client.post("/reservations/", json={
+        "study_area_id": sample_library["study_area_id"],
+        "seat_number": 1,
+        "start_time": "not-a-date",
+        "end_time": "also-not-a-date",
+    }, headers=auth_headers)
+    assert resp.status_code == 400
+    assert "ISO" in resp.get_json()["error"]
+
+
+def test_create_reservation_past_time(client, auth_headers, sample_library):
+    """Geçmiş zaman için rezervasyon yapılamaz."""
+    from datetime import datetime, timezone, timedelta
+    past = (datetime.now(timezone.utc) - timedelta(hours=2)).isoformat()
+    past_end = (datetime.now(timezone.utc) - timedelta(hours=1)).isoformat()
+    resp = client.post("/reservations/", json={
+        "study_area_id": sample_library["study_area_id"],
+        "seat_number": 1,
+        "start_time": past,
+        "end_time": past_end,
+    }, headers=auth_headers)
+    assert resp.status_code == 400
+
+
+def test_create_reservation_closed_library(client, auth_headers, app):
+    """Kapalı kütüphane için rezervasyon yapılamaz."""
+    from datetime import datetime, timezone, timedelta
+
+    with app.app_context():
+        from database import db
+        from models import Library, StudyArea
+        lib = Library(
+            name="Kapalı Kütüphane",
+            location="Test",
+            total_capacity=20,
+            current_occupancy=0,
+            is_open=False,
+        )
+        db.session.add(lib)
+        db.session.flush()
+        area = StudyArea(
+            library_id=lib.id,
+            name="Kapalı Alan",
+            total_seats=10,
+            available_seats=10,
+            area_type="general",
+        )
+        db.session.add(area)
+        db.session.commit()
+        closed_area_id = area.id
+
+    future = (datetime.now(timezone.utc) + timedelta(days=1)).replace(
+        hour=10, minute=0, second=0, microsecond=0
+    )
+    resp = client.post("/reservations/", json={
+        "study_area_id": closed_area_id,
+        "seat_number": 1,
+        "start_time": future.isoformat(),
+        "end_time": (future + timedelta(hours=2)).isoformat(),
+    }, headers=auth_headers)
+    assert resp.status_code == 400
+    assert "closed" in resp.get_json()["error"].lower()
+
+
+# ── GET /reservations/area/<id>/seats ────────────────────────────────────────
+
+def _naive_future(days=1, hour=10):
+    """Timezone bilgisi olmayan (naive UTC) gelecek zaman — URL query param için güvenli."""
+    from datetime import datetime, timezone, timedelta
+    return (
+        datetime.now(timezone.utc).replace(tzinfo=None)
+        + timedelta(days=days)
+    ).replace(hour=hour, minute=0, second=0, microsecond=0).isoformat()
+
+
+def test_get_taken_seats_empty(client, sample_library):
+    """Rezervasyon yokken boş liste döndürmeli."""
+    start = _naive_future(3, 10)
+    end = _naive_future(3, 12)
+
+    resp = client.get(
+        f"/reservations/area/{sample_library['study_area_id']}/seats"
+        f"?start_time={start}&end_time={end}"
+    )
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data["taken_seats"] == []
+    assert data["taken_count"] == 0
+
+
+def test_get_taken_seats_with_reservation(client, auth_headers, sample_library):
+    """Rezervasyon varsa koltuk numarası listede olmalı."""
+    start = _naive_future(4, 10)
+    end = _naive_future(4, 12)
+
+    client.post("/reservations/", json={
+        "study_area_id": sample_library["study_area_id"],
+        "seat_number": 3,
+        "start_time": start,
+        "end_time": end,
+    }, headers=auth_headers)
+
+    resp = client.get(
+        f"/reservations/area/{sample_library['study_area_id']}/seats"
+        f"?start_time={start}&end_time={end}"
+    )
+    assert resp.status_code == 200
+    assert 3 in resp.get_json()["taken_seats"]
+
+
+def test_get_taken_seats_missing_params(client, sample_library):
+    """start_time veya end_time eksikse 400 döndürmeli."""
+    resp = client.get(f"/reservations/area/{sample_library['study_area_id']}/seats")
+    assert resp.status_code == 400
+
+
+def test_get_taken_seats_invalid_date(client, sample_library):
+    """Geçersiz tarih formatı 400 döndürmeli."""
+    resp = client.get(
+        f"/reservations/area/{sample_library['study_area_id']}/seats"
+        f"?start_time=bad-date&end_time=bad-date"
+    )
+    assert resp.status_code == 400
+
+
+def test_get_taken_seats_nonexistent_area(client):
+    """Olmayan alan için 404 döndürmeli."""
+    from datetime import datetime, timezone, timedelta
+    future = datetime.now(timezone.utc) + timedelta(days=1)
+    start = future.replace(hour=10, minute=0, second=0, microsecond=0).isoformat()
+    end = future.replace(hour=12, minute=0, second=0, microsecond=0).isoformat()
+
+    resp = client.get(f"/reservations/area/99999/seats?start_time={start}&end_time={end}")
+    assert resp.status_code == 404
+
+
 def test_cancel_reservation_wrong_user(client, sample_library):
     """Başka kullanıcının rezervasyonunu iptal etmek 403 döndürmeli."""
     # Kullanıcı 1 rezervasyon oluşturur
