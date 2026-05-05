@@ -34,9 +34,6 @@ cd LibTracker
 # Install dependencies
 pip install -r backend/requirements.txt
 
-# Set up environment variables
-cp backend/.env.example backend/.env
-
 # Start the application (with seed data)
 cd backend
 python app.py
@@ -49,8 +46,10 @@ Swagger UI: `http://localhost:5000/apidocs`
 
 ```bash
 # Open in browser
-open demo.html   # or drag and drop the file directly into the browser
+open frontend/index.html   # or drag and drop the file directly into the browser
 ```
+
+Admin panel: `frontend/admin.html`
 
 ---
 
@@ -62,6 +61,9 @@ open demo.html   # or drag and drop the file directly into the browser
 |--------|----------|----------|
 | GET | `/libraries/` | All libraries + real-time occupancy |
 | GET | `/libraries/<id>/occupancy` | Single library occupancy details |
+| POST | `/libraries/` | Add a new library |
+| PUT | `/libraries/<id>` | Update library details |
+| DELETE | `/libraries/<id>` | Delete a library |
 
 ### Auth
 
@@ -71,6 +73,8 @@ open demo.html   # or drag and drop the file directly into the browser
 | POST | `/auth/login` | Login → JWT token |
 | POST | `/auth/logout` | Logout (revoke token) |
 | GET | `/auth/me` | Current user info |
+| PUT | `/auth/me/password` | Change password |
+| DELETE | `/auth/me` | Delete account |
 
 ### Reservations
 
@@ -79,6 +83,7 @@ open demo.html   # or drag and drop the file directly into the browser
 | POST | `/reservations/` | New reservation |
 | GET | `/reservations/user/<userId>` | User's reservations |
 | DELETE | `/reservations/<id>` | Cancel reservation |
+| GET | `/reservations/area/<areaId>/seats` | Available seats in a study area |
 
 ### Feedback
 
@@ -91,8 +96,10 @@ open demo.html   # or drag and drop the file directly into the browser
 
 | Method | Endpoint | Description |
 |--------|----------|----------|
+| GET | `/stats/overview` | Overall system statistics |
 | GET | `/stats/peak-hours` | Peak occupancy by hour |
 | GET | `/stats/daily-usage` | Daily average usage |
+| GET | `/stats/daily-reservations` | Daily reservation counts |
 
 ---
 
@@ -109,15 +116,22 @@ LibTracker/
 │   │   ├── libraries.py    # Occupancy API
 │   │   ├── reservations.py # Reservation API
 │   │   ├── feedback.py     # Feedback API
-│   │   └── stats.py        # Admin stats API
+│   │   ├── stats.py        # Admin stats API
+│   │   └── utils.py        # Shared route utilities
 │   └── requirements.txt
 ├── frontend/
-│   └── demo.html
+│   ├── index.html          # Main user interface
+│   ├── admin.html          # Admin dashboard
+│   ├── css/
+│   └── js/
 ├── tests/
 │   ├── conftest.py
-│   ├── test_auth.py        # 10 auth tests
-│   ├── test_reservations.py# 11 reservation tests
-│   └── test_feedback.py    # 7 feedback tests
+│   ├── test_auth.py        # 19 auth tests
+│   ├── test_reservations.py# 21 reservation tests
+│   ├── test_feedback.py    # 7 feedback tests
+│   ├── test_libraries.py   # 17 library tests
+│   ├── test_stats.py       # 12 stats tests
+│   └── test_app_coverage.py# 9 coverage tests
 ├── .github/
 │   └── workflows/
 │       └── ci.yml          # GitHub Actions CI
@@ -161,10 +175,9 @@ pytest tests/ -v
 | Sirac Ketenoglu | Backend Lead | `feature/backend-core` |
 | Emre Turan | Auth & Feedback | `feature/auth-and-feedback` |
 | Reis Yıldız | Frontend Lead | `feature/frontend-integration` |
-| Barış Küçükkıya | Test & Reservation | `feature/reservation-and-tests` |
+| Barış Küçükkaya | Test & Reservation | `feature/reservation-and-tests` |
 
 ---
 
 > **Note:** Since there is no real library sensor data, the system uses seed data and simulation.
 > This is normal and acceptable — it will be mentioned as "future work" in the final report.
-
